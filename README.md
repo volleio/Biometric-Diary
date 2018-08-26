@@ -2,7 +2,7 @@
 
 A note taking app secured with biometric typing authentication.
 
-![logo](https://raw.githubusercontent.com/volleio/Biometric-Diary/master/images/BiometricDiaryIcon.svg)
+![logo](/images/BiometricDiaryIcon.svg)
 
 #
 ## Running Locally
