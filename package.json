@@ -1,26 +1,26 @@
 {
-  "name": "biometric-diary",
-  "version": "0.0.0",
-  "description": "A note taking app secured with biometric typing authentication.",
-  "engines": {
-    "node": "8.9.1"
-  },
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "ejs": "^2.5.6",
-    "express": "^4.15.2"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/volleio/Biometric-Diary"
-  },
-  "keywords": [
-    "node",
-    "heroku",
-    "express"
-  ],
-  "license": "MIT"
+	"name": "biometric-diary",
+	"version": "0.0.0",
+	"description": "A note taking app secured with biometric typing authentication.",
+	"engines": {
+		"node": "8.9.1"
+	},
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js"
+	},
+	"dependencies": {
+		"ejs": "^2.5.6",
+		"express": "^4.15.2"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/volleio/Biometric-Diary"
+	},
+	"keywords": [
+		"node",
+		"heroku",
+		"express"
+	],
+	"license": "MIT"
 }

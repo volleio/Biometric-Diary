@@ -1,8 +1,8 @@
 {
-  "name": "Biometric Diary",
-  "description": "A note taking app secured with biometric typing authentication.",
-  "repository": "https://github.com/volleio/Biometric-Diary.git",
-  "logo": "https://raw.githubusercontent.com/volleio/Biometric-Diary/master/images/BiometricDiaryIcon.svg",
-  "keywords": ["node", "express", "heroku"],
-  "image": "heroku/nodejs"
+	"name": "Biometric Diary",
+	"description": "A note taking app secured with biometric typing authentication.",
+	"repository": "https://github.com/volleio/Biometric-Diary.git",
+	"logo": "https://raw.githubusercontent.com/volleio/Biometric-Diary/master/images/BiometricDiaryIcon.svg",
+	"keywords": ["node", "express", "heroku"],
+	"image": "heroku/nodejs"
 }
