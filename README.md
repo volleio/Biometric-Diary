@@ -10,8 +10,8 @@ A note taking app secured with biometric typing authentication.
 Make sure you have [Node.js](http://nodejs.org/) and the [Heroku CLI](https://cli.heroku.com/) installed.
 
 ```sh
-$ git clone git@github.com:heroku/node-js-getting-started.git # or clone your own fork
-$ cd node-js-getting-started
+$ git clone git@github.com:volleio/Biometric-Diary.git 
+$ cd Biometric-Diary
 $ npm install
 $ npm start
 ```
