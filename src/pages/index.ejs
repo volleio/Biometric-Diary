@@ -3,18 +3,25 @@
 <head>
 	<link href="/stylesheets/main.css" rel="preload" as="style" />
 	<style>
+		body {
+			margin: 0;
+		}
 		/*
 		 * Loading Spinner
 		*/
 		.spinner {
+			--spinner-size: 50px;
 			position: fixed;
-			left: calc(50% - 50px);
-			width: 100px;
-			height: 100px;
-			margin: 40vh 0;
+			width: var(--spinner-size);
+			height: var(--spinner-size);
 			perspective: 1000px;
 			opacity: 1;
 			transition: opacity 0.5s ease-in;
+		}
+		.spinner--viewport {
+			--spinner-size: 200px;
+			left: calc(50vw - var(--spinner-size) / 2);
+			margin: calc(50vh - var(--spinner-size) / 2) 0;
 		}
 		.spinner__line {
 			position: absolute;
@@ -24,11 +31,11 @@
 		}
 		.spinner__line:nth-child(1) {
 			animation: spinner-line 10s cubic-bezier(0.445, 0.05, 0.55, 0.95) infinite;
-			border-bottom: 8px solid #aaaa;
+			border-bottom: calc(var(--spinner-size) / 12) solid #aaaa;
 		}
 		.spinner__line:nth-child(2) {
 			animation: spinner-line 10s -5s cubic-bezier(0.445, 0.05, 0.55, 0.95) reverse infinite;
-			border-top: 8px solid #aaaa;
+			border-top: calc(var(--spinner-size) / 12) solid #aaaa;
 		}
 		@keyframes spinner-line {
 			16.7% {	transform: rotateX(30deg) rotateY(-60deg) rotateZ(0deg); }
@@ -42,7 +49,7 @@
 </head>
 
 <body>
-	<div class='spinner'>
+	<div class='spinner spinner--viewport'>
 		<div class='spinner__line'></div>
 		<div class='spinner__line'></div>
 	</div>
