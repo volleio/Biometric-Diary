@@ -1,8 +1,10 @@
+import * as env from "dotenv";
 import * as express from "express";
 import * as path from "path";
 import * as favicon from "serve-favicon";
 
-const PORT = process.env.PORT;
+env.config();
+const PORT = process.env.PORT || 5000;
 
 express.static("images");
 express.static("stylesheets");
