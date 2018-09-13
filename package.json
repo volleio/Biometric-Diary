@@ -8,7 +8,7 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "node build/server/index.js",
-		"watch": "watch \"npm run start\" build/server",
+		"watch": "nodemon build/server/index.js",
 		"build": "npm run compile-ts-server && npm run compile-ts-client && npm run compile-sass && npm run copy-assets",
 		"compile-ts-server": "tslint -p tsconfig.server.json && tsc -p tsconfig.server.json",
 		"compile-ts-client": "tslint -p tsconfig.client.json && tsc -p tsconfig.client.json",
@@ -47,8 +47,8 @@
 		"@types/node": "^10.9.4",
 		"@types/serve-favicon": "^2.2.30",
 		"concurrently": "^4.0.1",
+		"nodemon": "^1.18.4",
 		"tslint": "^5.11.0",
-		"typescript": "^3.0.3",
-		"watch": "^1.0.2"
+		"typescript": "^3.0.3"
 	}
 }
