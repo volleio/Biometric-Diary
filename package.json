@@ -18,7 +18,8 @@
 		"compile-ts-server-w": "tsc -w -p tsconfig.server.json",
 		"compile-ts-client-w": "tsc -w -p tsconfig.client.json",
 		"compile-sass-w": "node-sass src/server/stylesheets/ -o build/server/stylesheets/ && node-sass -r -w src/server/stylesheets/ -o build/server/stylesheets/",
-		"copy-assets-w": "cpx \"src/**/*.{ejs,svg,ico,env}\" ./build -w"
+		"copy-assets-w": "cpx \"src/**/*.{ejs,svg,ico,env}\" ./build -w",
+		"heroku-postbuild": "npm run build"
 	},
 	"dependencies": {
 		"cpx": "^1.5.0",
