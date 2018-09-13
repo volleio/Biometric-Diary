@@ -2,19 +2,23 @@
     "compilerOptions": {
         "target": "ES6",
         "noImplicitAny": true,
-        "module": "commonjs",
+        "module": "ES6",
         "moduleResolution": "node",
         "inlineSourceMap": true,
         "inlineSources": true,
-        "outDir": "dist",
+        "outDir": "build/client",
         "baseUrl": ".",
         "paths": {
             "*": [
-                "node_modules/*"
+                "node_modules/*",
             ]
         }
     },
     "include": [
-        "src/*"
+        "src/client/*",
+        "src/types/*"
+    ],
+    "exclude": [
+        "src/server"
     ]
 }

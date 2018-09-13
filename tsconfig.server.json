@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "noImplicitAny": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "outDir": "build/server",
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "node_modules/*",
+            ]
+        }
+    },
+    "include": [
+        "src/server/*",
+        "src/types/*"
+    ],
+    "exclude": [
+        "src/client"
+    ]
+}
