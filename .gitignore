@@ -1,5 +1,5 @@
 # Build artifacts
-dist
+build
 
 # Node build artifacts
 node_modules
