@@ -19,9 +19,10 @@
 			position: fixed;
 			width: var(--spinner-size);
 			height: var(--spinner-size);
+			opacity: 1;
+			transform: scale(1);
 			perspective: 1000px;
-			animation: fade-in .75s var(--ease-in-out-cubic);
-			transition: opacity .25s var(--ease-in-out-cubic);
+			transition: opacity .5s var(--ease-in-out-cubic), transform .75s var(--ease-in-out-cubic);
 		}
 		.spinner--viewport {
 			--spinner-size: 200px;
@@ -51,43 +52,25 @@
 			83.3% { transform: rotateX(30deg) rotateY(15deg) rotateZ(0deg); }
 			0%, 100% { transform: rotateX(-15deg) rotateY(60deg) rotateZ(360deg); }
 		}
-		@keyframes fade-in {
-			from { 
-				opacity: 0;
-				transform: scale(0);
-			}
-			to { 
-				opacity: 1;
-				transform: scale(1);
-			}
-		}
-		@keyframes fade-out {
-			from { 
-				opacity: 1;
-				transform: scale(1);
-			}
-			to { 
-				opacity: 0;
-				transform: scale(0);
-			}
-		}
 	</style>
 	<script defer src="/js/typingdna.js"></script>
 	<script defer src="/js/main.js"></script>
 </head>
 
 <body>
-	<div id="main-spinner" class='spinner spinner--viewport'>
-		<div class='spinner__line'></div>
-		<div class='spinner__line'></div>
+	<div id="main-spinner" class="spinner spinner--viewport">
+		<div class="spinner__line"></div>
+		<div class="spinner__line"></div>
 	</div>
 	<div id="main-container" class="main-container">
 		<div class="header">
 
 		</div>
 		<div class="login-container">
-			<div class="login-background"></div>
 			<input type="text" id="login-input" class="login-input">
+			<div class="login-button"></div>
+			<div class="login-help login-help__text1"></div>
+			<div class="login-help login-help__text2"></div>
 		</div>
 		<div class="notes-container">
 			<textarea name="note" cols="30" rows="10" id="note-input" class="note-input"></textarea>
