@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 app.use(favicon(__dirname + "/images/favicon.ico"));
 app.use("/stylesheets", express.static(path.join(__dirname, "stylesheets")));
+app.use("/js", express.static(path.join(__dirname, "client")));
 app.set("views", __dirname);
 app.set("view engine", "ejs");
 app.get("/", (req, res) => res.render("pages/index"));
