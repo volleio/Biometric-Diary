@@ -7,6 +7,10 @@
 			--ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
 			margin: 0;
 		}
+		.main-container {
+			opacity: 0;
+			transition: opacity 0.75s var(--ease-in-out-cubic);
+		}
 		/*
 		 * Loading Spinner
 		*/
@@ -17,11 +21,13 @@
 			height: var(--spinner-size);
 			perspective: 1000px;
 			animation: fade-in .75s var(--ease-in-out-cubic);
+			transition: opacity .25s var(--ease-in-out-cubic);
 		}
 		.spinner--viewport {
 			--spinner-size: 200px;
 			left: calc(50vw - var(--spinner-size) / 2);
 			margin: calc(50vh - var(--spinner-size) / 2) 0;
+			z-index: 1000;
 		}
 		.spinner__line {
 			position: absolute;
@@ -66,24 +72,25 @@
 			}
 		}
 	</style>
+	<script defer src="/js/typingdna.js"></script>
 	<script defer src="/js/main.js"></script>
 </head>
 
 <body>
-	<div class='spinner spinner--viewport'>
+	<div id="main-spinner" class='spinner spinner--viewport'>
 		<div class='spinner__line'></div>
 		<div class='spinner__line'></div>
 	</div>
-	<div class="main-container">
+	<div id="main-container" class="main-container">
 		<div class="header">
 
 		</div>
 		<div class="login-container">
 			<div class="login-background"></div>
-			<input type="text" class="login-input">
+			<input type="text" id="login-input" class="login-input">
 		</div>
 		<div class="notes-container">
-			
+			<textarea name="note" cols="30" rows="10" id="note-input" class="note-input"></textarea>
 		</div>
 	</div>
 </body>

@@ -10,7 +10,7 @@
  */
 declare class TypingDNA 
 {
-	constructor();
+	new(): void;
 
 	/**
 	 * Automatically called at initilization. It starts the recording of keystrokes.
