@@ -6,7 +6,7 @@
         "moduleResolution": "node",
         "inlineSourceMap": true,
         "inlineSources": true,
-        "outDir": "build/server",
+        "outDir": "build/",
         "baseUrl": ".",
         "paths": {
             "*": [
@@ -15,7 +15,7 @@
         }
     },
     "include": [
-        "src/server/*",
+        "src/*",
         "src/types/*"
     ],
     "exclude": [

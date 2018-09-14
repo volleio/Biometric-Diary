@@ -19,6 +19,5 @@
         "src/types/*"
     ],
     "exclude": [
-        "src/server"
     ]
 }
