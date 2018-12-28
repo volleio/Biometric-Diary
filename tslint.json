@@ -1,14 +1,26 @@
 {
     "defaultSeverity": "error",
     "extends": [
-        "tslint:recommended"
+        "tslint:recommended",
+        "tslint-config-airbnb"
     ],
     "jsRules": {},
     "rules": {
         "semicolon": true,
         "no-console": false,
-        "indent": [true, "tabs", 4],
+        "indent": true,
         "curly": false,
+        "no-trailing-whitespace": false,
+        "one-line": false,
+        "align": false,
+        "ter-indent": [true, "tab", 1],
+        "brace-style": [
+            true,
+            "allman",
+            {
+              "allowSingleLine": true
+            }
+        ]
     },
     "rulesDirectory": []
 }

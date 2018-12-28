@@ -12,12 +12,12 @@
 		"build": "npm run compile-ts-server && npm run compile-ts-client && npm run compile-sass && npm run copy-assets",
 		"compile-ts-server": "tslint -p tsconfig.server.json && tsc -p tsconfig.server.json",
 		"compile-ts-client": "tslint -p tsconfig.client.json && tsc -p tsconfig.client.json",
-		"compile-sass": "node-sass src/stylesheets/ -o build/stylesheets/",
+		"compile-sass": "node-sass-chokidar src/stylesheets/ -o build/stylesheets/",
 		"copy-assets": "cpx \"src/**/*.{js,ejs,svg,ico,env}\" ./build",
 		"test": "concurrently \"npm:compile-ts-server-w\" \"npm:compile-ts-client-w\" \"npm:compile-sass-w\" \"npm:copy-assets-w\"",
 		"compile-ts-server-w": "tsc -w -p tsconfig.server.json",
 		"compile-ts-client-w": "tsc -w -p tsconfig.client.json",
-		"compile-sass-w": "node-sass src/stylesheets/ -o build/stylesheets/ && node-sass -r -w src/stylesheets/ -o build/stylesheets/",
+		"compile-sass-w": "npm run compile-sass && node-sass-chokidar -r -w src/stylesheets/ -o build/stylesheets/ --usePolling --polling-interval 500",
 		"copy-assets-w": "cpx \"src/**/*.{js,ejs,svg,ico,env}\" ./build -w",
 		"heroku-postbuild": "npm run build"
 	},
@@ -27,8 +27,8 @@
 		"dtsmake": "0.0.10",
 		"ejs": "^2.5.6",
 		"express": "^4.15.2",
-		"node-sass": "^4.9.3",
 		"serve-favicon": "^2.5.0",
+		"tslint-config-airbnb": "^5.11.1",
 		"typingdnaclient": "^1.0.0"
 	},
 	"repository": {
@@ -47,8 +47,10 @@
 		"@types/node": "^10.9.4",
 		"@types/serve-favicon": "^2.2.30",
 		"concurrently": "^4.0.1",
+		"node-sass-chokidar": "^1.3.3",
 		"nodemon": "^1.18.4",
 		"tslint": "^5.11.0",
+		"tslint-config-prettier": "^1.17.0",
 		"typescript": "^3.0.3"
 	}
 }

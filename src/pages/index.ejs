@@ -1,60 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<link rel="stylesheet" href="/stylesheets/main.css" media="none" onload="media='all'">
-	<style>
-		body {
-			--ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
-			margin: 0;
-		}
-		.main-container {
-			opacity: 0;
-			transition: opacity 0.75s var(--ease-in-out-cubic);
-		}
-		/*
-		 * Loading Spinner
-		*/
-		.spinner {
-			--spinner-size: 50px;
-			position: fixed;
-			width: var(--spinner-size);
-			height: var(--spinner-size);
-			opacity: 1;
-			transform: scale(1);
-			perspective: 1000px;
-			transition: opacity .5s var(--ease-in-out-cubic), transform .75s var(--ease-in-out-cubic);
-		}
-		.spinner--viewport {
-			--spinner-size: 200px;
-			left: calc(50vw - var(--spinner-size) / 2);
-			margin: calc(50vh - var(--spinner-size) / 2) 0;
-			z-index: 1000;
-		}
-		.spinner__line {
-			position: absolute;
-			width: 100%;
-			height: 100%;
-			border-radius: 50%;
-		}
-		.spinner__line:nth-child(1) {
-			animation: spinner-line 10s cubic-bezier(0.445, 0.05, 0.55, 0.95) infinite;
-			border-bottom: calc(var(--spinner-size) / 12) solid #aaaa;
-		}
-		.spinner__line:nth-child(2) {
-			animation: spinner-line 10s -5s cubic-bezier(0.445, 0.05, 0.55, 0.95) reverse infinite;
-			border-top: calc(var(--spinner-size) / 12) solid #aaaa;
-		}
-		@keyframes spinner-line {
-			16.7% {	transform: rotateX(30deg) rotateY(-60deg) rotateZ(0deg); }
-			33.3% { transform: rotateX(-15deg) rotateY(15deg) rotateZ(360deg); }
-			50% { transform: rotateX(30deg) rotateY(-15deg) rotateZ(0deg); }
-			66.7% { transform: rotateX(-15deg) rotateY(30deg) rotateZ(360deg); }
-			83.3% { transform: rotateX(30deg) rotateY(15deg) rotateZ(0deg); }
-			0%, 100% { transform: rotateX(-15deg) rotateY(60deg) rotateZ(360deg); }
-		}
-	</style>
-	<script defer src="/js/typingdna.js"></script>
-	<script defer src="/js/main.js"></script>
+	<link rel="stylesheet" href="/stylesheets/main.css">
+	<script defer src="/js/typingdna.js" type="text/javascript"></script>
+	<script defer src="/js/lang.js" type="text/javascript"></script>
+	<script defer src="/js/main.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -67,13 +17,20 @@
 
 		</div>
 		<div class="login-container">
-			<input type="text" id="login-input" class="login-input">
-			<div class="login-button"></div>
-			<div class="login-help login-help__text1"></div>
-			<div class="login-help login-help__text2"></div>
+			<input type="text" id="login-input" class="login-input" tabindex="1">
+			<button class="login-button" tabindex="1"></button>
+			<div class="login-help">
+				<div class="spinner spinner-inline login-help-spinner">
+					<div class="spinner__line"></div>
+					<div class="spinner__line"></div>
+				</div>
+				<span class="login-help-text login-help-text__1"></span>
+				<span class="login-help-text login-help-text__2"></span>
+				<div class="login-help-extra"></div>
+			</div>
 		</div>
 		<div class="notes-container">
-			<textarea name="note" cols="30" rows="10" id="note-input" class="note-input"></textarea>
+			<textarea name="note" cols="30" rows="10" id="note-input__1" class="note-input"></textarea>
 		</div>
 	</div>
 </body>

@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES6",
-        "noImplicitAny": true,
+        "noImplicitAny": false,
         "module": "ES6",
         "moduleResolution": "node",
         "inlineSourceMap": true,
@@ -10,7 +10,7 @@
         "baseUrl": ".",
         "paths": {
             "*": [
-                "node_modules/*",
+                "node_modules/*"
             ]
         }
     },
