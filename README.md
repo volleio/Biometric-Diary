@@ -2,7 +2,7 @@
 
 A note taking app secured with biometric typing authentication.
 
-![logo](/src/server/images/BiometricDiaryIcon.svg)
+![logo](/src/images/BiometricDiaryIcon.svg)
 
 #
 ## Running Locally
