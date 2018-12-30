@@ -4,6 +4,8 @@ A note taking app secured with biometric typing authentication.
 
 ![logo](/src/images/BiometricDiaryIcon.svg)
 
+**View it live at [biometric-diary.herokuapp.com](https://biometric-diary.herokuapp.com/)!**
+
 #
 ## Running Locally
 
