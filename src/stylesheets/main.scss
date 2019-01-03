@@ -138,7 +138,14 @@ body {
 }
 
 .login-help-spinner {
+    --spinner-size: 26px;
     display: none;
+    left: calc(50% - var(--spinner-size) / 2);
+    margin-top: 6px;
+
+    > .spinner__line {
+        border-color: #FFF;
+    }
 }
 
 .login-help-text {
@@ -174,6 +181,18 @@ body {
 
     &:hover, &:focus {
         transform: scale(1.01);
+    }
+
+    &:active {
+        transform: scale(0.99);
+    }
+
+    &[disabled] {
+        &:hover, &:focus, &:active {
+            transform: scale(1);
+        }
+
+        cursor: default;
     }
 }
 

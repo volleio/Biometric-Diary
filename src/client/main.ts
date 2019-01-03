@@ -1,6 +1,6 @@
 class BiometricDiary {
-	public private;
 	private mainContainer: HTMLElement;
+	private typingDna: any;
 
 	// Login Help
 	private loginHelpSpinner = document.querySelector('.login-help-spinner') as HTMLElement;
@@ -12,6 +12,7 @@ class BiometricDiary {
 	private loginHelpExtra = document.querySelector('.login-help-extra') as HTMLElement;
 
 	private loginButton = document.querySelector('.login-button') as HTMLElement;
+	private loginInput = document.getElementById('login-input') as HTMLInputElement;
 
 	constructor() 
 	{
@@ -21,24 +22,23 @@ class BiometricDiary {
 	private initialize()
 	{
 		// TypingDNA singleton
-		const typingDNA = new TypingDNA();
+		this.typingDna = new TypingDNA();
 
 		// Set up login input tracking
-		typingDNA.addTarget('login-input');
+		this.typingDna.addTarget('login-input');
 
-		const loginInput = document.getElementById('login-input') as HTMLInputElement;
-		loginInput.addEventListener('keydown', (evt) => 
+		this.loginInput.addEventListener('keydown', (evt) => 
 		{
 			requestAnimationFrame(() => 
 			{
-				if (loginInput.value === '') typingDNA.reset();
+				if (this.loginInput.value === '') this.typingDna.reset();
 
-				if (loginInput.value.length <= 8) 
+				if (this.loginInput.value.length <= 8) 
 				{
 					this.updateLoginHelp(false, false, HelpTextStates.EnterEmail, 
 						LANG_DICT.Login.EnterEmail,	LANG_DICT.Login.EnterEmailExtra);
 					const loginHelpCurrent = this.isLoginHelpPrimary ? this.loginHelpText1 : this.loginHelpText2;
-					loginHelpCurrent.style.opacity = (1 - loginInput.value.length / 12).toString();
+					loginHelpCurrent.style.opacity = (1 - this.loginInput.value.length / 12).toString();
 				} 
 				else
 				{
@@ -47,7 +47,8 @@ class BiometricDiary {
 			});
 		});
 
-		loginInput.addEventListener('keydown', (evt) => { if (evt.key === 'Enter') this.submitLogin(); });
+		this.loginInput.addEventListener('keydown', (evt) => { if (evt.key === 'Enter') this.submitLogin(); });
+		this.loginButton.addEventListener('click', () => this.submitLogin());
 
 		// Transition from loading to login screen
 		const mainSpinner = document.getElementById('main-spinner');
@@ -57,7 +58,7 @@ class BiometricDiary {
 		this.mainContainer = document.getElementById('main-container');
 		this.mainContainer.style.opacity = '1';
 
-		loginInput.focus();
+		this.loginInput.focus();
 
 		// Prompt the user to enter their email
 		this.updateLoginHelp(false, false, HelpTextStates.Login, 
@@ -72,7 +73,17 @@ class BiometricDiary {
 
 	private submitLogin()
 	{
-		alert('Login Submitted');
+		this.updateLoginHelp(true, true, null, "");
+		const loginValue = this.loginInput.value;
+		this.loginInput.setAttribute("disabled", "");
+		this.loginButton.setAttribute("disabled", "");
+
+		const typingPattern: String = this.typingDna.getTypingPattern({
+			type: 1,
+			text: loginValue
+		});
+		this.typingDna.reset();
+		alert('Login Submitted: ' + typingPattern);
 	}
 
 	private updateLoginHelp(showSpinner: boolean, showButton: boolean, helpTextState: HelpTextStates,
@@ -87,11 +98,13 @@ class BiometricDiary {
 		{
 			this.loginButton.style.opacity = '1';
 			this.loginButton.style.pointerEvents = 'all';
+			this.loginHelp.style.pointerEvents = 'none';
 		}
 		else
 		{
 			this.loginButton.style.opacity = '0';
 			this.loginButton.style.pointerEvents = 'none';
+			this.loginHelp.style.pointerEvents = 'all';
 		}
 
 		let loginHelpCurrent: HTMLElement;
