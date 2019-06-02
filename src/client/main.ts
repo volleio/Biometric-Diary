@@ -83,7 +83,20 @@ class BiometricDiary {
 			text: loginValue
 		});
 		this.typingDna.reset();
-		alert('Login Submitted: ' + typingPattern);
+		
+		const requestLogin = async () => await (await fetch("/login", {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				loginId: loginValue,
+				typingPattern: typingPattern
+			})
+		})).json();
+
+		const loginResult = requestLogin();
+		console.log(loginResult);
 	}
 
 	private updateLoginHelp(showSpinner: boolean, showButton: boolean, helpTextState: HelpTextStates,

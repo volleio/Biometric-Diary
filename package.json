@@ -9,6 +9,7 @@
 	"scripts": {
 		"start": "node build/index.js",
 		"watch": "nodemon build/index.js",
+		"debug": "nodemon --inspect build/index.js",
 		"build": "npm run compile-ts-server && npm run compile-ts-client && npm run compile-sass && npm run copy-assets",
 		"compile-ts-server": "tsc -p tsconfig.server.json",
 		"compile-ts-client": "tsc -p tsconfig.client.json",
@@ -22,11 +23,13 @@
 		"heroku-postbuild": "npm run build"
 	},
 	"dependencies": {
+		"body-parser": "^1.19.0",
 		"cpx": "^1.5.0",
 		"dotenv": "^6.2.0",
 		"dtsmake": "0.0.10",
 		"ejs": "^2.5.6",
 		"express": "^4.17.1",
+		"express-session": "^1.16.1",
 		"serve-favicon": "^2.5.0",
 		"tslint-config-airbnb": "^5.11.1",
 		"typingdnaclient": "^1.0.3"
