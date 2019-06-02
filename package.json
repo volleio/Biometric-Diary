@@ -23,6 +23,7 @@
 		"heroku-postbuild": "npm run build"
 	},
 	"dependencies": {
+		"@types/express-session": "^1.15.12",
 		"body-parser": "^1.19.0",
 		"cpx": "^1.5.0",
 		"dotenv": "^6.2.0",
