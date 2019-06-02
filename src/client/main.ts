@@ -71,7 +71,7 @@ class BiometricDiary {
 		// Switch to note input tracking
 	}
 
-	private submitLogin()
+	private async submitLogin()
 	{
 		this.updateLoginHelp(true, true, null, "");
 		const loginValue = this.loginInput.value;
@@ -84,7 +84,7 @@ class BiometricDiary {
 		});
 		this.typingDna.reset();
 		
-		const requestLogin = async () => await (await fetch("/login", {
+		const loginResult = await (await fetch("/login", {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -95,8 +95,23 @@ class BiometricDiary {
 			})
 		})).json();
 
-		const loginResult = requestLogin();
-		console.log(loginResult);
+		switch(loginResult)
+		{
+			case (LoginStatus.success): {
+
+				break;
+			}
+
+			case (LoginStatus.userNotFound): {
+
+				break;
+			}
+
+			case (LoginStatus.failure): {
+
+				break;
+			}
+		}
 	}
 
 	private updateLoginHelp(showSpinner: boolean, showButton: boolean, helpTextState: HelpTextStates,
