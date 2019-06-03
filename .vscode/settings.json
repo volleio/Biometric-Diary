@@ -2,5 +2,12 @@
 	"editor.insertSpaces": false,
 	"search.exclude": {
 		"build": true
-	}
+	},
+	"cSpell.words": [
+		"biometric",
+		"diary",
+		"dna",
+		"typing",
+		"typingdna"
+	]
 }

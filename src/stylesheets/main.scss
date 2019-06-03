@@ -34,6 +34,47 @@ body {
     transition: opacity 0.75s var(--ease-in-out-cubic);
 }
 
+#main-spinner {
+    animation: fadeInSpinner 0.3s ease-in-out;
+}
+
+@keyframes fadeInSpinner {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.primary-button {
+    position: absolute;
+    width: 100px;
+    height: 40px;
+    top: calc(25vh + 60px);
+    left: calc(50% - 100px / 2);
+    background: var(--accent-bg-color);
+    border-radius: 20px;
+    box-shadow: 0 0 0 inset rgba(0,0,0,0.2);
+    transform: scale(1);
+    pointer-events: all;
+
+    cursor: pointer;
+    transition: all .1s var(--ease-in-out-cubic), opacity .25s;
+
+    &:hover, &:focus {
+        transform: scale(1.01);
+    }
+
+    &:active {
+        transform: scale(0.99);
+    }
+
+    &[disabled] {
+        &:hover, &:focus, &:active {
+            transform: scale(1);
+        }
+
+        cursor: default;
+    }
+}
+
 /*
  * Loading Spinner
  */
@@ -163,37 +204,9 @@ body {
 	transition: opacity 0.2s var(--ease-in-out-cubic);
 }
 
+
 .login-button {
-    position: absolute;
-    width: 100px;
-    height: 40px;
-    top: calc(25vh + 60px);
-    left: calc(50% - 100px / 2);
-    background: var(--accent-bg-color);
     opacity: 0;
-    border-radius: 20px;
-    box-shadow: 0 0 0 inset rgba(0,0,0,0.2);
-    transform: scale(1);
-    pointer-events: all;
-
-    cursor: pointer;
-    transition: all .1s var(--ease-in-out-cubic), opacity .25s;
-
-    &:hover, &:focus {
-        transform: scale(1.01);
-    }
-
-    &:active {
-        transform: scale(0.99);
-    }
-
-    &[disabled] {
-        &:hover, &:focus, &:active {
-            transform: scale(1);
-        }
-
-        cursor: default;
-    }
 }
 
 .notes-container {

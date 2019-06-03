@@ -8,12 +8,17 @@ import * as bodyParser from "body-parser";
 import * as path from "path";
 import * as favicon from "serve-favicon";
 import * as mongodb from "mongodb";
+import fetch from "node-fetch";
+import * as querystring from "querystring";
 
 env.config();
 const PORT = process.env.PORT || 5000;
 const SESSION_SECRET = process.env.SESSION_SECRET || "session secret";
 const REDIS_URL = process.env.REDIS_URL || "localhost:6379";
 const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/biometric-diary";
+
+const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
+const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
 let loginDataDb: mongodb.Collection;
 
@@ -64,6 +69,7 @@ app.post("/login", async (req, res) => {
 	{
 		req.session.key = loginInput;
 		req.session.loginQuality = 0;
+		req.session.typingPattern = typingPattern;
 		return res.send({ loginStatus: LoginStatus.userNotFound });
 	}
 
@@ -78,6 +84,19 @@ app.post("/login", async (req, res) => {
 	{
 		return res.status(401).send({ loginStatus: LoginStatus.failure });
 	}
+});
+
+app.post("/create-account", async (req, res) => {
+	const loginInput = req.body.loginId;
+	const typingPattern = req.body.typingPattern;
+	const previousTypingPattern = req.session.typingPattern;
+
+	const matchResult = await matchTypingString(typingPattern, previousTypingPattern);
+
+	console.log(matchResult);
+
+	return res.send({ loginStatus: LoginStatus.success });
+	return res.status(401).send({ loginStatus: LoginStatus.failure });
 });
 
 // set up mongodb before starting app.listening
@@ -96,3 +115,30 @@ mongodbClient.connect(MONGODB_URL, { useNewUrlParser: true }, (err, client) =>
 
 	app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 });
+
+
+async function matchTypingString(newTypingPattern: string, oldTypingPattern: string, quality = 2)
+{
+	return await (await fetch("https://api.typingdna.com/match", {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'Cache-Control': 'no-cache',
+			'Authorization': 'Basic ' + Buffer.from(TYPINGDNA_APIKEY + ':' + TYPINGDNA_APISECRET).toString('base64'),
+		},
+		body: querystring.stringify({
+			tp1 : newTypingPattern,
+			tp2 : oldTypingPattern,
+			quality : quality.toString(),
+		})
+	})).json();
+}
+
+
+enum LoginStatus {
+	success,
+	userNotFound,
+	accountCreated,
+	accountNotCreated,
+	failure
+}
