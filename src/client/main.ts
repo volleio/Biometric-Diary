@@ -224,6 +224,11 @@ class BiometricDiary {
 
 		if (extraHelpText)
 		{
+			const extraHelpQuestionMark = document.createElement("span");
+			extraHelpQuestionMark.className = "login-help-extra-question-mark";
+			extraHelpQuestionMark.innerHTML = LANG_DICT.Login.ExtraHelpQuestionMark;
+			loginHelpHidden.appendChild(extraHelpQuestionMark);
+
 			this.loginHelpExtra.innerHTML = extraHelpText;
 			this.loginHelpExtra.style.marginTop = `${loginHelpHidden.offsetHeight + 8}px`;
 		}

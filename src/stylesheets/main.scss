@@ -2,13 +2,16 @@
  * Document-wide styles
  */
 :root {
+    --txt-color: #36384C;
+    --txt-font-family: 'Vollkorn', serif;
     --accent-bg-color: #FAB;
     --accent-bg-color-transparent: #FAB8;
-    --accent-txt-color: #36384C;
+    --accent-txt-color: #FFF;
 }
 
 input, textarea {
     border: none;
+    font-family: var(--txt-font-family);
     
     &:focus {
        outline: none;
@@ -17,6 +20,7 @@ input, textarea {
 
 button {
     border: none;
+    font-family: var(--txt-font-family);
 
     &:focus {
         outline: none;
@@ -26,6 +30,9 @@ button {
 body {
     --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
     margin: 0;
+    @import url('https://fonts.googleapis.com/css?family=Vollkorn&display=swap');
+    font-family: var(--txt-font-family);
+    color: var(--txt-font-family);
 }
 
 .main-container {
@@ -43,17 +50,18 @@ body {
     to   { opacity: 1; }
 }
 
-.primary-button {
-    position: absolute;
-    width: 100px;
+.primary-button, .secondary-button {
     height: 40px;
-    top: calc(25vh + 60px);
-    left: calc(50% - 100px / 2);
-    background: var(--accent-bg-color);
+    padding: 1px 16px;
     border-radius: 20px;
     box-shadow: 0 0 0 inset rgba(0,0,0,0.2);
     transform: scale(1);
     pointer-events: all;
+
+    font-size: 20px;
+    font-style: italic;
+    text-align: center;
+    user-select: none;
 
     cursor: pointer;
     transition: all .1s var(--ease-in-out-cubic), opacity .25s;
@@ -73,6 +81,17 @@ body {
 
         cursor: default;
     }
+}
+
+.primary-button {
+    background: var(--accent-bg-color);
+    color: var(--accent-txt-color);
+}
+
+.secondary-button {
+    background: #FFF;
+    border: 1px solid var(--accent-bg-color);
+    color: var(--accent-bg-color);
 }
 
 /*
@@ -168,11 +187,11 @@ body {
     width: 80%;
     top: calc(25vh + 60px);
 
-    line-height: 36px;
+    line-height: 40px;
     font-size: 20px;
     font-style: italic;
     text-align: center;
-    color: var(--accent-txt-color);
+    color: var(--txt-color);
     
     user-select: none;
     transition: opacity .25s var(--ease-in-out-cubic);
@@ -204,8 +223,24 @@ body {
 	transition: opacity 0.2s var(--ease-in-out-cubic);
 }
 
+.login-help-extra-question-mark {
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    line-height: 36px;
+    letter-spacing: 5px;
+    margin-left: 1em;
+    display: inline-block;
+    border-radius: 50%;
+    background: #C4C4C4C4;
+    color: var(--accent-txt-color);
+}
 
 .login-button {
+    position: absolute;
+    width: 100px;
+    top: calc(25vh + 60px);
+    left: calc(50% - 100px / 2);
     opacity: 0;
 }
 
