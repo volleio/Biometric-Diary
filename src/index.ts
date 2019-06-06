@@ -15,7 +15,7 @@ env.config();
 const PORT = process.env.PORT || 5000;
 const SESSION_SECRET = process.env.SESSION_SECRET || "session secret";
 const REDIS_URL = process.env.REDIS_URL || "localhost:6379";
-const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/biometric-diary";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/biometric-diary";
 
 const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
 const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
@@ -137,7 +137,7 @@ app.post("/create-account", async (req, res) => {
 
 // set up mongodb before starting app.listening
 const mongodbClient = mongodb.MongoClient;
-mongodbClient.connect(MONGODB_URL, { useNewUrlParser: true }, (err, client) =>
+mongodbClient.connect(MONGODB_URI, { useNewUrlParser: true }, (err, client) =>
 {
 	if (err)
 	{
