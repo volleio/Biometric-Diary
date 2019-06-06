@@ -65,8 +65,12 @@ app.post("/login", async (req, res) => {
 	const loginInput = req.body.loginId;
 	const typingPattern = req.body.typingPattern;
 	
+	// Prevent mongo injection attacks
+	if (typeof loginInput !== 'string' || loginInput.startsWith('$'))
+		return res.status(401).send({ loginStatus: LoginStatus.failure });
+
 	// check if user exists
-	const userLoginData = await loginDataDb.findOne({ id: loginInput });
+	const userLoginData = await loginDataDb.findOne({ _id: loginInput });
 	if (!userLoginData)
 	{
 		req.session.key = loginInput;
@@ -89,7 +93,6 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/create-account", async (req, res) => {
-	const loginInput = req.body.loginId;
 	const typingPattern = req.body.typingPattern;
 	const previousTypingPattern = req.session.typingPattern;
 
@@ -107,6 +110,21 @@ app.post("/create-account", async (req, res) => {
 			return res.status(401).send({ loginStatus: LoginStatus.failure });
 		}
 		
+		// Successful initial username creation, save new account
+		try
+		{
+			const userLoginData = await loginDataDb.insertOne({ 
+					_id: req.session.key,
+					id_patterns: [previousTypingPattern, typingPattern],
+				});
+		}
+		catch(err)
+		{
+			console.error("Error attempting to save new account to db in create-account call:");
+			console.error(err);
+			return res.status(401).send({ loginStatus: LoginStatus.failure });
+		}
+
 		return res.send({ loginStatus: LoginStatus.success });
 	}
 	catch(err)

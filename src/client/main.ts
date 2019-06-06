@@ -115,11 +115,13 @@ class BiometricDiary {
 				break;
 
 			case LoginStatus.failure:
+				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
 				break;
 
 			case LoginStatus.error:
 			default:
+				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.ErrorLogin);
 				break;
 		}
@@ -138,7 +140,7 @@ class BiometricDiary {
 		const createAccountButton = document.createElement('button');
 		createAccountButton.className = 'primary-button';
 		createAccountButton.innerText = LANG_DICT.Login.CreateAccount;
-		createAccountButton.addEventListener('click', async (evt) => {
+		createAccountButton.addEventListener('click', (evt) => {
 			this.loginId = loginId;
 
 			this.loginInput.removeAttribute('disabled');
@@ -150,7 +152,13 @@ class BiometricDiary {
 		const cancelButton = document.createElement('button');
 		cancelButton.className = 'secondary-button';
 		cancelButton.innerText = LANG_DICT.Login.CancelLogin;
-		
+		cancelButton.addEventListener('click', (evt) => {
+			this.loginInput.removeAttribute('disabled');
+			this.loginInput.focus();
+			this.loginInput.value = '';
+			this.UpdateLoginHelp(false, false, HelpStates.EnterEmail, LANG_DICT.Login.EnterEmail);
+		});
+
 		userNotFoundButtonContainer.appendChild(createAccountButton);
 		userNotFoundButtonContainer.appendChild(cancelButton);
 
@@ -183,18 +191,17 @@ class BiometricDiary {
 		switch (createAccountResult.loginStatus)
 		{
 			case LoginStatus.success:
-				// Save new account
-				
-
 				this.OnLoginSuccess();
 				break;
 
 			case LoginStatus.failure:
+				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);			
 				break;
 
 			case LoginStatus.error:
 			default:
+				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.ErrorLogin, LANG_DICT.Login.ErrorLogin);
 				break;
 		}
