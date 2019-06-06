@@ -14,14 +14,14 @@ class BiometricDiary {
 	private loginButton = document.querySelector('.login-button') as HTMLElement;
 	private loginInput = document.getElementById('login-input') as HTMLInputElement;
 
-	private loginId = "";
+	private loginId = '';
 
 	constructor() 
 	{
-		this.initialize();
+		this.Initialize();
 	}
 
-	private initialize()
+	private Initialize()
 	{
 		// TypingDNA singleton
 		this.typingDna = new TypingDNA();
@@ -38,27 +38,27 @@ class BiometricDiary {
 				if (this.currentHelpTextState === HelpStates.CreateAccount)
 				{
 					if (this.loginInput.value === this.loginId)
-						this.createAccount();
+						this.CreateAccount();
 					
 					return;
 				}
 
 				if (this.loginInput.value.length <= 8) 
 				{
-					this.updateLoginHelp(false, false, HelpStates.EnterEmail, 
+					this.UpdateLoginHelp(false, false, HelpStates.EnterEmail, 
 						LANG_DICT.Login.EnterEmail,	LANG_DICT.Login.EnterEmailExtra);
 					const loginHelpCurrent = this.isLoginHelpPrimary ? this.loginHelpText1 : this.loginHelpText2;
 					loginHelpCurrent.style.opacity = (1 - this.loginInput.value.length / 12).toString();
 				} 
 				else
 				{
-					this.updateLoginHelp(false, true, HelpStates.Login, LANG_DICT.Login.LoginButton);
+					this.UpdateLoginHelp(false, true, HelpStates.Login, LANG_DICT.Login.LoginButton);
 				}
 			});
 		});
 
-		this.loginInput.addEventListener('keydown', (evt) => { if (evt.key === 'Enter') this.submitLogin(); });
-		this.loginButton.addEventListener('click', () => this.submitLogin());
+		this.loginInput.addEventListener('keydown', (evt) => { if (evt.key === 'Enter') this.SubmitLogin(); });
+		this.loginButton.addEventListener('click', () => this.SubmitLogin());
 
 		// Transition from loading to login screen
 		const mainSpinner = document.getElementById('main-spinner');
@@ -71,22 +71,21 @@ class BiometricDiary {
 		this.loginInput.focus();
 
 		// Prompt the user to enter their email
-		this.updateLoginHelp(false, false, HelpStates.Login, 
+		this.UpdateLoginHelp(false, false, HelpStates.Login, 
 			LANG_DICT.Login.EnterEmail, LANG_DICT.Login.EnterEmailExtra);
 
-		// Set login extra help text show/hide listeners on help text 2 because it will always be on top
-		this.loginHelpText2.addEventListener('mouseover', () => this.onLoginHelpMouseOver());
-		this.loginHelpText2.addEventListener('mouseout', () => this.onLoginHelpMouseOut());
-
-		// Switch to note input tracking
+		this.loginHelpText1.addEventListener('mouseover', () => this.OnLoginHelpMouseOver());
+		this.loginHelpText1.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
+		this.loginHelpText2.addEventListener('mouseover', () => this.OnLoginHelpMouseOver());
+		this.loginHelpText2.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
 	}
 
-	private async submitLogin(): Promise<void>
+	private async SubmitLogin(): Promise<void>
 	{
-		this.updateLoginHelp(true, true, null, "");
+		this.UpdateLoginHelp(true, true, null, '');
 		const loginValue = this.loginInput.value;
-		this.loginInput.setAttribute("disabled", "");
-		this.loginButton.setAttribute("disabled", "");
+		this.loginInput.setAttribute('disabled', '');
+		this.loginButton.setAttribute('disabled', '');
 
 		const typingPattern: String = this.typingDna.getTypingPattern({
 			type: 1,
@@ -94,7 +93,7 @@ class BiometricDiary {
 		});
 		this.typingDna.reset();
 		
-		const loginResult = await (await fetch("/login", {
+		const loginResult = await (await fetch('/login', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -108,53 +107,62 @@ class BiometricDiary {
 		switch(loginResult.loginStatus)
 		{
 			case LoginStatus.success:
-			{
-				this.onLoginSuccess();
+				this.OnLoginSuccess();
 				break;
-			}
 
 			case LoginStatus.userNotFound:
-			{
-				const userNotFoundElements = document.createElement("div");
-				userNotFoundElements.innerText = LANG_DICT.Login.UserNotFound;
-				
-				const createAccountButton = document.createElement("button");
-				createAccountButton.className = "primary-button";
-				createAccountButton.innerText = LANG_DICT.Login.CreateAccount;
-				createAccountButton.addEventListener("click", async (evt) => {
-					this.loginId = loginValue;
-
-					this.loginInput.removeAttribute("disabled");
-					this.loginInput.focus();
-					this.loginInput.value = "";
-					this.updateLoginHelp(true, false, HelpStates.CreateAccount, LANG_DICT.Login.RetypeLogin(loginValue));
-				});
-				
-				const cancelButton = document.createElement("button");
-				cancelButton.className = "secondary-button";
-				cancelButton.innerText = LANG_DICT.Login.CancelLogin;
-				
-				userNotFoundElements.appendChild(createAccountButton);
-				userNotFoundElements.appendChild(cancelButton);
-
-				this.updateLoginHelp(false, false, HelpStates.UserNotFound, userNotFoundElements);
+				this.OnUserNotFound(loginValue);
 				break;
-			}
 
 			case LoginStatus.failure:
-			{
-				this.updateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
+				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
 				break;
-			}
+
+			case LoginStatus.error:
+			default:
+				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.ErrorLogin);
+				break;
 		}
 	}
 
-	private async createAccount(): Promise<void>
+	private OnUserNotFound(loginId: string): void
 	{
-		this.updateLoginHelp(true, true, null, "");
+		const userNotFoundElements = document.createElement('div');
+		userNotFoundElements.className = "login-help-with-button";
+		userNotFoundElements.innerText = LANG_DICT.Login.UserNotFound;
+		
+		const userNotFoundButtonContainer = document.createElement('div');
+		userNotFoundButtonContainer.className = "login-help-buttons";
+		userNotFoundElements.appendChild(userNotFoundButtonContainer);
+
+		const createAccountButton = document.createElement('button');
+		createAccountButton.className = 'primary-button';
+		createAccountButton.innerText = LANG_DICT.Login.CreateAccount;
+		createAccountButton.addEventListener('click', async (evt) => {
+			this.loginId = loginId;
+
+			this.loginInput.removeAttribute('disabled');
+			this.loginInput.focus();
+			this.loginInput.value = '';
+			this.UpdateLoginHelp(true, false, HelpStates.CreateAccount, LANG_DICT.Login.RetypeLogin(loginId));
+		});
+		
+		const cancelButton = document.createElement('button');
+		cancelButton.className = 'secondary-button';
+		cancelButton.innerText = LANG_DICT.Login.CancelLogin;
+		
+		userNotFoundButtonContainer.appendChild(createAccountButton);
+		userNotFoundButtonContainer.appendChild(cancelButton);
+
+		this.UpdateLoginHelp(false, false, HelpStates.UserNotFound, userNotFoundElements);
+	}
+
+	private async CreateAccount(): Promise<void>
+	{
+		this.UpdateLoginHelp(true, true, null, '');
 		const loginValue = this.loginInput.value;
-		this.loginInput.setAttribute("disabled", "");
-		this.loginButton.setAttribute("disabled", "");
+		this.loginInput.setAttribute('disabled', '');
+		this.loginButton.setAttribute('disabled', '');
 
 		const typingPattern: String = this.typingDna.getTypingPattern({
 			type: 1,
@@ -162,7 +170,7 @@ class BiometricDiary {
 		});
 		this.typingDna.reset();
 
-		const createAccountResult = await (await fetch("/create-account", {
+		const createAccountResult = await (await fetch('/create-account', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -172,29 +180,33 @@ class BiometricDiary {
 			})
 		})).json();
 
-		console.log(createAccountResult);
+		switch (createAccountResult.loginStatus)
+		{
+			case LoginStatus.success:
+				// Save new account
+				
+
+				this.OnLoginSuccess();
+				break;
+
+			case LoginStatus.failure:
+				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);			
+				break;
+
+			case LoginStatus.error:
+			default:
+				this.UpdateLoginHelp(false, false, HelpStates.ErrorLogin, LANG_DICT.Login.ErrorLogin);
+				break;
+		}
 	}
 
-	private updateLoginHelp(showSpinner: boolean, showButton: boolean, helpTextState: HelpStates,
+	private UpdateLoginHelp(showSpinner: boolean, showButton: boolean, helpTextState: HelpStates,
 		help: string | HTMLElement, extraHelpText?: string): void
 	{
 		if (showSpinner) 
 			this.loginHelpSpinner.style.display = 'block';
 		else 
 			this.loginHelpSpinner.style.display = '';
-
-		if (showButton) 
-		{
-			this.loginButton.style.opacity = '1';
-			this.loginButton.style.pointerEvents = 'all';
-			this.loginHelp.style.pointerEvents = 'none';
-		}
-		else
-		{
-			this.loginButton.style.opacity = '0';
-			this.loginButton.style.pointerEvents = 'none';
-			this.loginHelp.style.pointerEvents = 'all';
-		}
 
 		let loginHelpCurrent: HTMLElement;
 		let loginHelpHidden: HTMLElement;
@@ -210,22 +222,38 @@ class BiometricDiary {
 		}
 
 		loginHelpCurrent.style.opacity = '0';
+		loginHelpCurrent.style.pointerEvents = 'none';
 		loginHelpHidden.style.opacity = '1';
+		loginHelpHidden.style.pointerEvents = 'all';
 
-		if (typeof help === "string")
+		if (showButton) 
+		{
+			this.loginButton.style.opacity = '1';
+			this.loginButton.style.pointerEvents = 'all';
+			this.loginHelp.style.pointerEvents = 'none';
+			loginHelpHidden.style.pointerEvents = 'none';
+		}
+		else
+		{
+			this.loginButton.style.opacity = '0';
+			this.loginButton.style.pointerEvents = 'none';
+			this.loginHelp.style.pointerEvents = 'all';
+		}
+
+		if (typeof help === 'string')
 		{
 			loginHelpHidden.innerHTML = help;
 		}
 		else
 		{
-			loginHelpHidden.innerHTML = ""
+			loginHelpHidden.innerHTML = '';
 			loginHelpHidden.appendChild(help);
 		}
 
 		if (extraHelpText)
 		{
-			const extraHelpQuestionMark = document.createElement("span");
-			extraHelpQuestionMark.className = "login-help-extra-question-mark";
+			const extraHelpQuestionMark = document.createElement('span');
+			extraHelpQuestionMark.className = 'login-help-extra-question-mark';
 			extraHelpQuestionMark.innerHTML = LANG_DICT.Login.ExtraHelpQuestionMark;
 			loginHelpHidden.appendChild(extraHelpQuestionMark);
 
@@ -241,18 +269,20 @@ class BiometricDiary {
 		this.isLoginHelpPrimary = !this.isLoginHelpPrimary;
 	}
 
-	private onLoginHelpMouseOver(): void 
+	private OnLoginHelpMouseOver(): void 
 	{
 		this.loginHelpExtra.style.opacity = '1';
 	}
 
-	private onLoginHelpMouseOut(): void 
+	private OnLoginHelpMouseOut(): void 
 	{
 		this.loginHelpExtra.style.opacity = '0';
 	}
 
-	private onLoginSuccess(): void
+	private OnLoginSuccess(): void
 	{
+		this.UpdateLoginHelp(false, false, null, "");
+		// Switch to note input tracking
 
 	}
 }
@@ -263,12 +293,16 @@ enum HelpStates {
 	UserNotFound,
 	CreateAccount,
 	FailedLogin,
+	ErrorLogin,
 }
 
 enum LoginStatus {
 	success,
 	userNotFound,
-	failure
+	accountCreated,
+	accountNotCreated,
+	failure,
+	error
 }
 
 const biometricDiary = new BiometricDiary();

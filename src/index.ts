@@ -20,6 +20,8 @@ const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/biomet
 const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
 const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
+const TYPINGDNA_MIN_SCORE = 50;
+
 let loginDataDb: mongodb.Collection;
 
 const RedisStore = connectRedis(session);
@@ -91,12 +93,28 @@ app.post("/create-account", async (req, res) => {
 	const typingPattern = req.body.typingPattern;
 	const previousTypingPattern = req.session.typingPattern;
 
-	const matchResult = await matchTypingString(typingPattern, previousTypingPattern);
-
-	console.log(matchResult);
-
-	return res.send({ loginStatus: LoginStatus.success });
-	return res.status(401).send({ loginStatus: LoginStatus.failure });
+	try
+	{
+		const matchResult = await matchTypingString(typingPattern, previousTypingPattern);
+		if (matchResult.status != 200)
+		{
+			console.error(`Match typing string in a create-account call returned ${matchResult.status}:`);
+			console.error(`${matchResult.name}:${matchResult.message}`);
+			return res.status(401).send({ loginStatus: LoginStatus.failure });
+		}
+		else if (matchResult.score < TYPINGDNA_MIN_SCORE)
+		{
+			return res.status(401).send({ loginStatus: LoginStatus.failure });
+		}
+		
+		return res.send({ loginStatus: LoginStatus.success });
+	}
+	catch(err)
+	{
+		console.error("Error attempting to match typing string in a create-account call:");
+		console.error(err);
+		return res.status(401).send({ loginStatus: LoginStatus.failure });
+	}
 });
 
 // set up mongodb before starting app.listening
@@ -140,5 +158,6 @@ enum LoginStatus {
 	userNotFound,
 	accountCreated,
 	accountNotCreated,
-	failure
+	failure,
+	error
 }

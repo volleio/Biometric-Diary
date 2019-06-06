@@ -3,15 +3,16 @@
  */
 :root {
     --txt-color: #36384C;
-    --txt-font-family: 'Vollkorn', serif;
+    --accent-txt-color: #FFF;
+    --primary-font-family: 'Lato', sans-serif;
+    --secondary-font-family: 'Vollkorn', sans-serif;
     --accent-bg-color: #FAB;
     --accent-bg-color-transparent: #FAB8;
-    --accent-txt-color: #FFF;
 }
 
 input, textarea {
     border: none;
-    font-family: var(--txt-font-family);
+    font-family: var(--primary-font-family);
     
     &:focus {
        outline: none;
@@ -20,7 +21,7 @@ input, textarea {
 
 button {
     border: none;
-    font-family: var(--txt-font-family);
+    font-family: var(--primary-font-family);
 
     &:focus {
         outline: none;
@@ -30,9 +31,10 @@ button {
 body {
     --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
     margin: 0;
+    @import url('https://fonts.googleapis.com/css?family=Lato&display=swap');
     @import url('https://fonts.googleapis.com/css?family=Vollkorn&display=swap');
-    font-family: var(--txt-font-family);
-    color: var(--txt-font-family);
+    font-family: var(--primary-font-family);
+    color: var(--primary-font-family);
 }
 
 .main-container {
@@ -59,7 +61,6 @@ body {
     pointer-events: all;
 
     font-size: 20px;
-    font-style: italic;
     text-align: center;
     user-select: none;
 
@@ -85,7 +86,7 @@ body {
 
 .primary-button {
     background: var(--accent-bg-color);
-    color: var(--accent-txt-color);
+    color: var(--txt-color);
 }
 
 .secondary-button {
@@ -227,13 +228,30 @@ body {
     width: 32px;
     height: 32px;
     text-align: center;
-    line-height: 36px;
-    letter-spacing: 5px;
+    line-height: 32px;
+    letter-spacing: 1px;
     margin-left: 1em;
     display: inline-block;
     border-radius: 50%;
     background: #C4C4C4C4;
     color: var(--accent-txt-color);
+    font-style: normal;
+}
+
+.login-help-with-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-help-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    & > button {
+        margin: 0 10px;
+    }
 }
 
 .login-button {
