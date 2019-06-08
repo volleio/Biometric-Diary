@@ -26,9 +26,8 @@ const TYPINGDNA_MIN_SCORE = 50;
 let loginDataDb: mongodb.Collection;
 
 const RedisStore = connectRedis(session);
-const redisClient = redis.createClient();
+const redisClient = redis.createClient(REDIS_URL);
 const redisSessionStore = new RedisStore({
-	url: REDIS_URL,
 	client: redisClient,
 	ttl: 3600
 });
