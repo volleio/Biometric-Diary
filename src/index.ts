@@ -62,6 +62,9 @@ app.set('trust proxy', 1);
 app.get("/", (req, res) => res.render("pages/index"));
 
 app.post("/login", async (req, res) => {
+	if (!req.session)
+			return res.status(500).send();
+			
 	const loginInput = req.body.loginId;
 	const typingPattern = req.body.typingPattern;
 	
@@ -70,8 +73,19 @@ app.post("/login", async (req, res) => {
 		return res.status(401).send({ loginStatus: LoginStatus.failure });
 
 	// check if user exists
-	const userLoginData = await loginDataDb.findOne({ _id: loginInput });
-	if (!userLoginData)
+	let userLoginData;
+	try 
+	{
+		userLoginData = await loginDataDb.findOne({ _id: loginInput });
+	}
+	catch (err)
+	{
+		console.error("Error attempting to find user id in db in login call:");
+		console.error(err);
+        return res.status(500).send();
+	}
+
+	if (!userLoginData || !userLoginData.id_patterns || userLoginData.id_patterns.length < 2)
 	{
 		req.session.key = loginInput;
 		req.session.loginQuality = 0;
@@ -79,60 +93,101 @@ app.post("/login", async (req, res) => {
 		return res.send({ loginStatus: LoginStatus.userNotFound });
 	}
 
-	if (true)
-	{
-		req.session.key = loginInput;
-		req.session.loginQuality = 1;
+	let recentIdLoginPatterns = userLoginData.id_patterns[userLoginData.id_patterns.length - 1];
+	// TODO: calling TypingDNA's match with more than one previous pattern results in 445, invalid typing pattern.
+	// 		 are the patterns not being concatenated correctly?
+	// for (let i = userLoginData.id_patterns.length - 2; i >= 0 && i > userLoginData.id_patterns.length - 5; i--)
+	// 	recentIdLoginPatterns += ';' + userLoginData.id_patterns;
 
-		return res.send({ loginStatus: LoginStatus.success });
+	let matchResult;
+	try
+	{
+		matchResult = await matchTypingString(typingPattern, recentIdLoginPatterns);
 	}
-	else
+	catch(err)
+	{
+		console.error("Error attempting to match typing string in a login call:");
+		console.error(err);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+
+	if (matchResult.status != 200)
+	{
+		console.error(`Match typing string in login call returned ${matchResult.status}:`);
+		console.error(`${matchResult.name}:${matchResult.message}`);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
 	{
 		return res.status(401).send({ loginStatus: LoginStatus.failure });
 	}
+
+	// Successful login, save new typing pattern to account
+	try
+	{
+		const userLoginData = await loginDataDb.updateOne({ _id: req.session.key }, { $push: { id_patterns: typingPattern }});
+	}
+	catch(err)
+	{
+		console.error("Error attempting to save new account to db in login call:");
+		console.error(err);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+
+	req.session.key = loginInput;
+	req.session.successfulLogin = true;
+	req.session.loginQuality = matchResult.score;
+	return res.send({ loginStatus: LoginStatus.success });
 });
 
 app.post("/create-account", async (req, res) => {
+	if (!req.session)
+			return res.status(500).send();
+			
 	const typingPattern = req.body.typingPattern;
 	const previousTypingPattern = req.session.typingPattern;
 
+	let matchResult;
 	try
 	{
-		const matchResult = await matchTypingString(typingPattern, previousTypingPattern);
-		if (matchResult.status != 200)
-		{
-			console.error(`Match typing string in a create-account call returned ${matchResult.status}:`);
-			console.error(`${matchResult.name}:${matchResult.message}`);
-			return res.status(401).send({ loginStatus: LoginStatus.failure });
-		}
-		else if (matchResult.score < TYPINGDNA_MIN_SCORE)
-		{
-			return res.status(401).send({ loginStatus: LoginStatus.failure });
-		}
-		
-		// Successful initial username creation, save new account
-		try
-		{
-			const userLoginData = await loginDataDb.insertOne({ 
-					_id: req.session.key,
-					id_patterns: [previousTypingPattern, typingPattern],
-				});
-		}
-		catch(err)
-		{
-			console.error("Error attempting to save new account to db in create-account call:");
-			console.error(err);
-			return res.status(401).send({ loginStatus: LoginStatus.failure });
-		}
-
-		return res.send({ loginStatus: LoginStatus.success });
+		matchResult = await matchTypingString(typingPattern, previousTypingPattern);
 	}
 	catch(err)
 	{
 		console.error("Error attempting to match typing string in a create-account call:");
 		console.error(err);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+
+	if (matchResult.status != 200)
+	{
+		console.error(`Match typing string in a create-account call returned ${matchResult.status}:`);
+		console.error(`${matchResult.name}:${matchResult.message}`);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
+	{
 		return res.status(401).send({ loginStatus: LoginStatus.failure });
 	}
+	
+	// Successful initial username creation, save new account
+	try
+	{
+		const userLoginData = await loginDataDb.insertOne({ 
+				_id: req.session.key,
+				id_patterns: [previousTypingPattern, typingPattern],
+			});
+	}
+	catch(err)
+	{
+		console.error("Error attempting to save new account to db in create-account call:");
+		console.error(err);
+		return res.status(500).send({ loginStatus: LoginStatus.error });
+	}
+
+	req.session.successfulLogin = true;
+	req.session.loginQuality = 1;
+	return res.send({ loginStatus: LoginStatus.success });
 });
 
 // set up mongodb before starting app.listening

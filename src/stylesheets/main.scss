@@ -178,6 +178,10 @@ body {
         border: 1px solid #EEE;
         box-shadow: 0 2px 14px -4px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.2);
     }
+
+    &[disabled] {
+        box-shadow: none;
+    }
 }
 
 .login-help {

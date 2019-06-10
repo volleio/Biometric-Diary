@@ -93,16 +93,25 @@ class BiometricDiary {
 		});
 		this.typingDna.reset();
 		
-		const loginResult = await (await fetch('/login', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				loginId: loginValue,
-				typingPattern: typingPattern
-			})
-		})).json();
+		let loginResult;
+		try
+		{
+			loginResult = await (await fetch('/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					loginId: loginValue,
+					typingPattern: typingPattern
+				})
+			})).json();
+		}
+		catch(err)
+		{
+			console.error(err);
+			loginResult = { loginStatus: LoginStatus.error };
+		}
 
 		switch(loginResult.loginStatus)
 		{
@@ -178,15 +187,24 @@ class BiometricDiary {
 		});
 		this.typingDna.reset();
 
-		const createAccountResult = await (await fetch('/create-account', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				typingPattern: typingPattern
-			})
-		})).json();
+		let createAccountResult;
+		try
+		{
+			createAccountResult = await (await fetch('/create-account', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					typingPattern: typingPattern
+				})
+			})).json();
+		}
+		catch(err)
+		{
+			console.error(err);
+			createAccountResult = { loginStatus: LoginStatus.error };
+		}
 
 		switch (createAccountResult.loginStatus)
 		{
