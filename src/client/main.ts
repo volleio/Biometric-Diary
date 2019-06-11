@@ -6,15 +6,19 @@ class BiometricDiary {
 	private loginHelpSpinner = document.querySelector('.login-help-spinner') as HTMLElement;
 	private currentHelpTextState: HelpStates = null;
 	private isLoginHelpPrimary = true;
-	private loginHelp = document.querySelector('.login-help') as HTMLElement;
-	private loginHelpText1 = document.querySelector('.login-help-text__1') as HTMLElement;
-	private loginHelpText2 = document.querySelector('.login-help-text__2') as HTMLElement;
-	private loginHelpExtra = document.querySelector('.login-help-extra') as HTMLElement;
+	private loginContainer = document.querySelector('.login-container') as HTMLElement;
+	private loginHelp = this.loginContainer.querySelector('.login-help') as HTMLElement;
+	private loginHelpText1 = this.loginContainer.querySelector('.login-help-text__1') as HTMLElement;
+	private loginHelpText2 = this.loginContainer.querySelector('.login-help-text__2') as HTMLElement;
+	private loginHelpExtra = this.loginContainer.querySelector('.login-help-extra') as HTMLElement;
 
-	private loginButton = document.querySelector('.login-button') as HTMLElement;
-	private loginInput = document.getElementById('login-input') as HTMLInputElement;
+	private loginButton = this.loginContainer.querySelector('.login-button') as HTMLElement;
+	private loginInput = this.loginContainer.querySelector('.login-input') as HTMLInputElement;
+	private loginAuthBadge = this.loginContainer.querySelector('.login-auth-badge') as HTMLInputElement;
 
 	private loginId = '';
+
+	private notesContainer = document.querySelector('.notes-container') as HTMLInputElement;
 
 	constructor() 
 	{
@@ -139,11 +143,11 @@ class BiometricDiary {
 	private OnUserNotFound(loginId: string): void
 	{
 		const userNotFoundElements = document.createElement('div');
-		userNotFoundElements.className = "login-help-with-button";
+		userNotFoundElements.className = 'login-help-with-button';
 		userNotFoundElements.innerText = LANG_DICT.Login.UserNotFound;
 		
 		const userNotFoundButtonContainer = document.createElement('div');
-		userNotFoundButtonContainer.className = "login-help-buttons";
+		userNotFoundButtonContainer.className = 'login-help-buttons';
 		userNotFoundElements.appendChild(userNotFoundButtonContainer);
 
 		const createAccountButton = document.createElement('button');
@@ -283,7 +287,6 @@ class BiometricDiary {
 			loginHelpHidden.appendChild(extraHelpQuestionMark);
 
 			this.loginHelpExtra.innerHTML = extraHelpText;
-			this.loginHelpExtra.style.marginTop = `${loginHelpHidden.offsetHeight + 8}px`;
 		}
 		else
 		{
@@ -295,7 +298,10 @@ class BiometricDiary {
 	}
 
 	private OnLoginHelpMouseOver(): void 
-	{
+	{		
+		this.loginHelpExtra.style.display = 'block';
+		const loginHelpHeight = this.isLoginHelpPrimary ? this.loginHelpText1.offsetHeight : this.loginHelpText2.offsetHeight;
+		this.loginHelpExtra.style.marginTop = `${loginHelpHeight + 8}px`;
 		this.loginHelpExtra.style.opacity = '1';
 	}
 
@@ -306,9 +312,19 @@ class BiometricDiary {
 
 	private OnLoginSuccess(): void
 	{
-		this.UpdateLoginHelp(false, false, null, "");
-		// Switch to note input tracking
+		this.UpdateLoginHelp(false, false, null, '');
+		this.loginHelp.style.pointerEvents = 'none';
+		this.loginButton.style.pointerEvents = 'none';
+		this.loginContainer.classList.add('login-container--logged-in');
+		this.loginInput.classList.add('login-input--logged-in');
+		this.loginAuthBadge.classList.add('login-auth-badge--userid-verified');
 
+		// Switch to note input tracking
+		this.loginContainer.addEventListener('transitionend', () =>
+		{
+			this.notesContainer.classList.add('notes-container--visible');
+
+		});
 	}
 }
 
