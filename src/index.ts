@@ -1,27 +1,29 @@
-import * as env from "dotenv";
-import * as express from "express";
-import * as session from "express-session";
-import * as redis from "redis";
-import * as connectRedis from "connect-redis";
-import * as rateLimit from "express-rate-limit";
-import * as bodyParser from "body-parser";
-import * as path from "path";
-import * as favicon from "serve-favicon";
-import * as mongodb from "mongodb";
-import fetch from "node-fetch";
-import * as querystring from "querystring";
+import * as env from 'dotenv';
+import * as express from 'express';
+import * as session from 'express-session';
+import * as redis from 'redis';
+import * as connectRedis from 'connect-redis';
+import * as rateLimit from 'express-rate-limit';
+import * as bodyParser from 'body-parser';
+import * as path from 'path';
+import * as favicon from 'serve-favicon';
+import * as mongodb from 'mongodb';
+import fetch from 'node-fetch';
+import * as querystring from 'querystring';
 
 env.config();
 const PORT = process.env.PORT || 5000;
-const SESSION_SECRET = process.env.SESSION_SECRET || "session secret";
-const REDIS_URL = process.env.REDIS_URL || "localhost:6379";
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/biometric-diary";
-const MONGODB_DBNAME = process.env.MONGODB_DBNAME || "biometric-diary";
+const SESSION_SECRET = process.env.SESSION_SECRET || 'session secret';
+const REDIS_URL = process.env.REDIS_URL || 'localhost:6379';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/biometric-diary';
+const MONGODB_DBNAME = process.env.MONGODB_DBNAME || 'biometric-diary';
 
 const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
 const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
 const TYPINGDNA_MIN_SCORE = 50;
+
+const DEBUG = false && SESSION_SECRET === 'debug';
 
 let loginDataDb: mongodb.Collection;
 
@@ -42,9 +44,9 @@ app.use(session({
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(favicon(__dirname + "/images/favicon.ico"));
-app.use("/stylesheets", express.static(path.join(__dirname, "stylesheets")));
-app.use("/js", express.static(path.join(__dirname, "client")));
+app.use(favicon(__dirname + '/images/favicon.ico'));
+app.use('/stylesheets', express.static(path.join(__dirname, 'stylesheets')));
+app.use('/js', express.static(path.join(__dirname, 'client')));
 
 // Rate limit api methods
 // @ts-ignore
@@ -53,15 +55,15 @@ const apiLimiter = rateLimit({
 	max: 10,
 	message: { error: 'Too many login requests. Please wait 15 minutes and try again.' }
 });
-app.use("/login", apiLimiter);
+app.use('/login', apiLimiter);
 
-app.set("views", __dirname);
-app.set("view engine", "ejs");
+app.set('views', __dirname);
+app.set('view engine', 'ejs');
 app.set('trust proxy', 1);
 
-app.get("/", (req, res) => res.render("pages/index"));
+app.get('/', (req, res) => res.render('pages/index'));
 
-app.post("/login", async (req, res) => {
+app.post('/login', async (req, res) => {
 	if (!req.session)
 			return res.status(500).send();
 			
@@ -80,7 +82,7 @@ app.post("/login", async (req, res) => {
 	}
 	catch (err)
 	{
-		console.error("Error attempting to find user id in db in login call:");
+		console.error('Error attempting to find user id in db in login call:');
 		console.error(err);
         return res.status(500).send();
 	}
@@ -102,11 +104,14 @@ app.post("/login", async (req, res) => {
 	let matchResult;
 	try
 	{
-		matchResult = await matchTypingString(typingPattern, recentIdLoginPatterns);
+		if (DEBUG)
+			matchResult = { status: 200, score: 100 }
+		else
+			matchResult = await matchTypingString(typingPattern, recentIdLoginPatterns);
 	}
 	catch(err)
 	{
-		console.error("Error attempting to match typing string in a login call:");
+		console.error('Error attempting to match typing string in a login call:');
 		console.error(err);
 		return res.status(500).send({ loginStatus: LoginStatus.error });
 	}
@@ -129,7 +134,7 @@ app.post("/login", async (req, res) => {
 	}
 	catch(err)
 	{
-		console.error("Error attempting to save new account to db in login call:");
+		console.error('Error attempting to save new account to db in login call:');
 		console.error(err);
 		return res.status(500).send({ loginStatus: LoginStatus.error });
 	}
@@ -140,7 +145,7 @@ app.post("/login", async (req, res) => {
 	return res.send({ loginStatus: LoginStatus.success });
 });
 
-app.post("/create-account", async (req, res) => {
+app.post('/create-account', async (req, res) => {
 	if (!req.session)
 			return res.status(500).send();
 			
@@ -150,11 +155,14 @@ app.post("/create-account", async (req, res) => {
 	let matchResult;
 	try
 	{
-		matchResult = await matchTypingString(typingPattern, previousTypingPattern);
+		if (DEBUG)
+			matchResult = { status: 200, score: 100 }
+		else
+			matchResult = await matchTypingString(typingPattern, previousTypingPattern);
 	}
 	catch(err)
 	{
-		console.error("Error attempting to match typing string in a create-account call:");
+		console.error('Error attempting to match typing string in a create-account call:');
 		console.error(err);
 		return res.status(500).send({ loginStatus: LoginStatus.error });
 	}
@@ -180,7 +188,7 @@ app.post("/create-account", async (req, res) => {
 	}
 	catch(err)
 	{
-		console.error("Error attempting to save new account to db in create-account call:");
+		console.error('Error attempting to save new account to db in create-account call:');
 		console.error(err);
 		return res.status(500).send({ loginStatus: LoginStatus.error });
 	}
@@ -202,7 +210,7 @@ mongodbClient.connect(MONGODB_URI, { useNewUrlParser: true }, (err, client) =>
 	}
 
 	const db = client.db(MONGODB_DBNAME);
-	loginDataDb = db.collection("login_data");
+	loginDataDb = db.collection('login_data');
 
 	app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
 });
@@ -210,7 +218,7 @@ mongodbClient.connect(MONGODB_URI, { useNewUrlParser: true }, (err, client) =>
 
 async function matchTypingString(newTypingPattern: string, oldTypingPattern: string, quality = 2)
 {
-	return await (await fetch("https://api.typingdna.com/match", {
+	return await (await fetch('https://api.typingdna.com/match', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',

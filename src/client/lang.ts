@@ -12,4 +12,7 @@ let LANG_DICT = {
 		FailedLogin: 'Authentication failed, please try again.',
 		ErrorLogin: 'Error with authentication service, please try again later.',
 	},
+	MainMenu: {
+		Logout: 'logout',
+	}
 };

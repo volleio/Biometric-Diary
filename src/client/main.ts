@@ -313,18 +313,31 @@ class BiometricDiary {
 	private OnLoginSuccess(): void
 	{
 		this.UpdateLoginHelp(false, false, null, '');
-		this.loginHelp.style.pointerEvents = 'none';
-		this.loginButton.style.pointerEvents = 'none';
+		this.loginHelp.style.display = 'none';
+		this.loginButton.style.display = 'none';
 		this.loginContainer.classList.add('login-container--logged-in');
 		this.loginInput.classList.add('login-input--logged-in');
 		this.loginAuthBadge.classList.add('login-auth-badge--userid-verified');
-
-		// Switch to note input tracking
-		this.loginContainer.addEventListener('transitionend', () =>
+		
+		// Set up main menu
+		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
+		const logoutButton = mainMenu.querySelector(".logout-button") as HTMLElement;
+		logoutButton.innerHTML = LANG_DICT.MainMenu.Logout;
+		mainMenu.style.display = 'flex';
+		requestAnimationFrame(() => mainMenu.style.opacity = '1');
+	
+		this.loginContainer.addEventListener('mouseenter', () =>
 		{
-			this.notesContainer.classList.add('notes-container--visible');
-
+			this.loginContainer.style.height = this.loginContainer.scrollHeight + 'px';
 		});
+	
+		this.loginContainer.addEventListener('mouseleave', () =>
+		{
+			this.loginContainer.style.height = '';
+		});
+		
+		// Switch to note input tracking
+		this.notesContainer.classList.add('notes-container--visible');
 	}
 }
 
