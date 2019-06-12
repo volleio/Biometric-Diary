@@ -30,6 +30,19 @@ class BiometricDiary {
 		// TypingDNA singleton
 		this.typingDna = new TypingDNA();
 
+		// Display warning on Mobile devices
+		if (this.typingDna.isMobile())
+		{
+			const mobileWarning = document.querySelector('.mobile-warning') as HTMLElement;
+			mobileWarning.style.display = 'flex';
+
+			const mobileWarningText = mobileWarning.querySelector('.mobile-warning__body');
+			mobileWarningText.innerHTML = LANG_DICT.Other.MobileWarningText;
+
+			const popupClose = mobileWarning.querySelector('.popup-close') as HTMLButtonElement;
+			popupClose.addEventListener('click', () => mobileWarning.style.display = 'none');
+		}
+
 		// Set up login input tracking
 		this.typingDna.addTarget('login-input');
 

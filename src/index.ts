@@ -47,6 +47,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(favicon(__dirname + '/images/favicon.ico'));
 app.use('/stylesheets', express.static(path.join(__dirname, 'stylesheets')));
 app.use('/js', express.static(path.join(__dirname, 'client')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Rate limit api methods
 // @ts-ignore
@@ -130,7 +131,7 @@ app.post('/login', async (req, res) => {
 	// Successful login, save new typing pattern to account
 	try
 	{
-		const userLoginData = await loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { id_patterns: typingPattern }});
+		const userLoginData = await loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern }});
 	}
 	catch(err)
 	{

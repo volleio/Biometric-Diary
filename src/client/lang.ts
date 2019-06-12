@@ -14,5 +14,8 @@ let LANG_DICT = {
 	},
 	MainMenu: {
 		Logout: 'logout',
+	},
+	Other: {
+		MobileWarningText: '<p>Mobile Devices are not fully supported by <em>Biometric Diary</em>.</p><p>Accounts created on desktops cannot be accessed on mobile devices, and accounts created on mobile devices will not be accessible on desktops.</p>',
 	}
 };
