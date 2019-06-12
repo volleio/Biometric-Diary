@@ -23,7 +23,7 @@ const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
 const TYPINGDNA_MIN_SCORE = 50;
 
-const DEBUG = false && SESSION_SECRET === 'debug';
+const DEBUG = SESSION_SECRET === 'debug';
 
 let loginDataDb: mongodb.Collection;
 
@@ -78,7 +78,7 @@ app.post('/login', async (req, res) => {
 	let userLoginData;
 	try 
 	{
-		userLoginData = await loginDataDb.findOne({ _id: loginInput });
+		userLoginData = await loginDataDb.findOne({ _id: loginInput.toLowerCase() });
 	}
 	catch (err)
 	{
@@ -130,7 +130,7 @@ app.post('/login', async (req, res) => {
 	// Successful login, save new typing pattern to account
 	try
 	{
-		const userLoginData = await loginDataDb.updateOne({ _id: req.session.key }, { $push: { id_patterns: typingPattern }});
+		const userLoginData = await loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { id_patterns: typingPattern }});
 	}
 	catch(err)
 	{
@@ -182,7 +182,7 @@ app.post('/create-account', async (req, res) => {
 	try
 	{
 		const userLoginData = await loginDataDb.insertOne({ 
-				_id: req.session.key,
+				_id: req.session.key.toLowerCase(),
 				id_patterns: [previousTypingPattern, typingPattern],
 			});
 	}
@@ -196,6 +196,13 @@ app.post('/create-account', async (req, res) => {
 	req.session.successfulLogin = true;
 	req.session.loginQuality = 1;
 	return res.send({ loginStatus: LoginStatus.success });
+});
+
+app.post('/logout', async (req, res) => {
+	if (!req.session)
+			return res.status(500).send();
+
+	req.session.destroy(() => res.send());
 });
 
 // set up mongodb before starting app.listening

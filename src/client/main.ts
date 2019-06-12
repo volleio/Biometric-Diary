@@ -321,19 +321,25 @@ class BiometricDiary {
 		
 		// Set up main menu
 		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
-		const logoutButton = mainMenu.querySelector(".logout-button") as HTMLElement;
-		logoutButton.innerHTML = LANG_DICT.MainMenu.Logout;
 		mainMenu.style.display = 'flex';
 		requestAnimationFrame(() => mainMenu.style.opacity = '1');
-	
+		
 		this.loginContainer.addEventListener('mouseenter', () =>
 		{
 			this.loginContainer.style.height = this.loginContainer.scrollHeight + 'px';
 		});
-	
+		
 		this.loginContainer.addEventListener('mouseleave', () =>
 		{
 			this.loginContainer.style.height = '';
+		});
+		
+		const logoutButton = mainMenu.querySelector(".logout-button") as HTMLElement;
+		logoutButton.innerHTML = LANG_DICT.MainMenu.Logout;
+		logoutButton.addEventListener('click', async () =>
+		{
+			await fetch('/logout');
+			location.reload();
 		});
 		
 		// Switch to note input tracking
