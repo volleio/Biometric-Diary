@@ -13,13 +13,24 @@ class BiometricDiary {
 	private loginHelpExtra = this.loginContainer.querySelector('.login-help-extra') as HTMLElement;
 
 	private loginButton = this.loginContainer.querySelector('.login-button') as HTMLElement;
-	private loginInput = this.loginContainer.querySelector('.login-input') as HTMLInputElement;
-	private loginAuthBadge = this.loginContainer.querySelector('.login-auth-badge') as HTMLInputElement;
-	private loginAuthBadgeProgressRing: ProgressRing;
-
+	private loginInput = document.getElementById('login-input') as HTMLInputElement;
+	private loginAuthBadge = this.loginContainer.querySelector('.login-auth-badge') as HTMLElement;
+	
 	private loginId = '';
 
-	private notesContainer = document.querySelector('.notes-container') as HTMLInputElement;
+	private authMatchProgressRing: ProgressRing;
+	private authUpdateProgressRing: ProgressRing;
+
+	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
+	private firstNoteInput = document.getElementById('note-input') as HTMLTextAreaElement;
+	
+	private keysPressed = 0; // Just for stats
+	private keysPressedSinceQualityUpdate = 0;
+	private currentPatternQuality = 0;
+	private keysPressedSinceMatchUpdate = 0;
+	private static QUALITY_UPDATE_MINIMUM_KEYPRESSES = 10;
+	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 50;
+	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
 	constructor() 
 	{
@@ -51,7 +62,8 @@ class BiometricDiary {
 		{
 			requestAnimationFrame(() => 
 			{
-				if (this.loginInput.value === '') this.typingDna.reset();
+				if (this.loginInput.value === '') 
+					this.typingDna.reset();
 
 				if (this.currentHelpTextState === HelpStates.CreateAccount)
 				{
@@ -336,9 +348,11 @@ class BiometricDiary {
 		const loginAuthBadgeCheck = this.loginAuthBadge.querySelector('.login-auth-badge__check') as HTMLElement;
 		loginAuthBadgeCheck.classList.add('animate-in');
 
-		// Set up auth badge progress ring
-		const loginAuthBadgeCircle = this.loginAuthBadge.querySelector('.progress-ring__circle') as SVGCircleElement;
-		this.loginAuthBadgeProgressRing = new ProgressRing(loginAuthBadgeCircle);
+		// Set up auth badge progress rings
+		const authUpdateProgressRingCircle = this.loginAuthBadge.querySelector('.auth-update-progress-ring > .progress-ring__circle') as SVGCircleElement;
+		this.authUpdateProgressRing = new ProgressRing(authUpdateProgressRingCircle);
+		const authMatchProgressRingCircle = this.loginAuthBadge.querySelector('.auth-match-progress-ring > .progress-ring__circle') as SVGCircleElement;
+		this.authMatchProgressRing = new ProgressRing(authMatchProgressRingCircle);
 
 		// Set up main menu
 		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
@@ -365,8 +379,71 @@ class BiometricDiary {
 		
 		// Switch to note input tracking
 		this.notesContainer.classList.add('notes-container--visible');
+		this.typingDna.removeTarget('login-input');
+		this.typingDna.reset();
+		this.typingDna.addTarget('note-input');
+		
+		this.firstNoteInput.addEventListener('keydown', (evt) => 
+		{
+			requestAnimationFrame(() => 
+			{
+				this.keysPressed++;
+				this.keysPressedSinceQualityUpdate++;
+				this.keysPressedSinceMatchUpdate++;
+
+				this.UpdateAuthUpdateProgressRing();
+
+				/**
+				 * Before checking a typing pattern against TypingDNA's API, the typing pattern must meet a minimum 
+				 * typing pattern quality, or must exceed the maximum number of keypresses for a single match update.
+				 */
+
+				 // Check typing quality every few (~10) characters
+				if (this.keysPressedSinceQualityUpdate >= BiometricDiary.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
+				{
+					this.keysPressedSinceQualityUpdate = 0;
+
+					const typingPattern: String = this.typingDna.getTypingPattern({
+						type: 2,
+						text: this.firstNoteInput.value
+					});
+
+					if (typingPattern == null)
+						return;
+
+					this.currentPatternQuality = this.typingDna.getQuality(typingPattern);
+					// Check against API once the quality (~0.5) or character threshold (~50) has been met
+					if (this.currentPatternQuality >= BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY ||
+						this.keysPressedSinceMatchUpdate >= BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES)
+					{
+						this.currentPatternQuality = 0;
+						this.keysPressedSinceMatchUpdate = 0;
+
+						// Reset auth update progress
+						this.authUpdateProgressRing.SetProgress(0);
+
+						// Send typing pattern to server
+					}
+				}
+			});
+		});
 	}
 
+	private UpdateAuthUpdateProgressRing(): void
+	{
+		/** 
+		 * While half of auth update progress is current pattern quality and half is the distance to the max keypresses,
+		 * the progress should appear to "ease-out", or have diminishing returns
+		 */
+		const qualityProgress = this.currentPatternQuality / BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY;
+		const maxKeypressProgress = this.keysPressedSinceMatchUpdate / BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES;
+		let progress = (qualityProgress + maxKeypressProgress) / 2;
+
+		// asymptotic function y = -20^(-x) + 1
+		progress = 1 - Math.pow(20, -(progress));
+
+		this.authUpdateProgressRing.SetProgress(progress);
+	}
 }
 
 /**
@@ -374,7 +451,7 @@ class BiometricDiary {
  */
 class ProgressRing
 {
-	private progressRing: SVGCircleElement;
+	public progressRing: SVGCircleElement;
 	private circumference: number;
 	
 	constructor(progressRing: SVGCircleElement)
@@ -391,7 +468,7 @@ class ProgressRing
 	 * Updates the progress ring's progress.
 	 * @param progress a number between 0 and 1
 	 */
-	private SetProgress(progress: number)
+	public SetProgress(progress: number)
 	{
 		const offset = this.circumference - progress * this.circumference;
 		this.progressRing.style.strokeDashoffset = offset.toString();
