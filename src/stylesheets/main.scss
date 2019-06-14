@@ -230,10 +230,11 @@ em {
     flex-direction: column;
 
     left: 50%;
+    top: 45%;
     width: 80%;
     max-width: 400px;
     margin: 5% 0;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
 }
 
 .mobile-warning__image {
@@ -407,35 +408,51 @@ em {
     height: 30px;
     margin: 7px 8px;
     box-sizing: border-box;
-
-    opacity: 0;
     border-radius: 50%;
-    border: 2px dotted white;
-    
-    transition: opacity 1s var(--ease-in-out-cubic);
-    
-    &.login-auth-badge--userid-verified {
-        display: block;
-        opacity: 1;
-        background-color: #F8C600;
-    }
-
-    &.login-auth-badge--fully-verified {
-        display: block;
-        opacity: 1;
-        background-color: #46AB2B;
-    }
 }
 
 .login-auth-badge__check {
     position: absolute;
-    top: 8px;
-    left: 6px;
-    border-bottom: 3px solid white;
-    border-left: 3px solid white;
-    width: 10px;
-    height: 5px;
+    top: 10px;
+    left: 8px;
+    border-bottom: 0px solid #46AB2B;
+    border-left: 0px solid #46AB2B;
+    width: 0;
+    height: 0;
     transform: rotateZ(-45deg);
+
+    &.animate-in {
+        animation: auth-badge-check-in 0.5s ease-in .5s forwards;
+    }
+}
+
+@keyframes auth-badge-check-in {
+    0% {
+        width: 0;
+        height: 0;
+        border-bottom: 3px solid #46AB2B;
+        border-left: 3px solid #46AB2B;
+    }
+
+    50% {
+        width: 0;
+        height: 5px;
+        border-bottom: 3px solid #46AB2B;
+        border-left: 3px solid #46AB2B;
+    }
+
+    100% {
+        width: 10px;
+        height: 5px;
+        border-bottom: 3px solid #46AB2B;
+        border-left: 3px solid #46AB2B;
+    }
+}
+
+.progress-ring__circle {
+    transition: stroke-dashoffset 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
 }
 
 .main-menu {
@@ -481,6 +498,7 @@ em {
     box-sizing: border-box;
     padding: 8px;
 
+    font-size: 18px;
     border-radius: 4px;
     box-shadow: 0 0 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }

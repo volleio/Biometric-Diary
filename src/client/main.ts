@@ -15,6 +15,7 @@ class BiometricDiary {
 	private loginButton = this.loginContainer.querySelector('.login-button') as HTMLElement;
 	private loginInput = this.loginContainer.querySelector('.login-input') as HTMLInputElement;
 	private loginAuthBadge = this.loginContainer.querySelector('.login-auth-badge') as HTMLInputElement;
+	private loginAuthBadgeProgressRing: ProgressRing;
 
 	private loginId = '';
 
@@ -330,8 +331,15 @@ class BiometricDiary {
 		this.loginButton.style.display = 'none';
 		this.loginContainer.classList.add('login-container--logged-in');
 		this.loginInput.classList.add('login-input--logged-in');
-		this.loginAuthBadge.classList.add('login-auth-badge--userid-verified');
 		
+		this.loginAuthBadge.style.display = 'block';
+		const loginAuthBadgeCheck = this.loginAuthBadge.querySelector('.login-auth-badge__check') as HTMLElement;
+		loginAuthBadgeCheck.classList.add('animate-in');
+
+		// Set up auth badge progress ring
+		const loginAuthBadgeCircle = this.loginAuthBadge.querySelector('.progress-ring__circle') as SVGCircleElement;
+		this.loginAuthBadgeProgressRing = new ProgressRing(loginAuthBadgeCircle);
+
 		// Set up main menu
 		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
 		mainMenu.style.display = 'flex';
@@ -357,6 +365,36 @@ class BiometricDiary {
 		
 		// Switch to note input tracking
 		this.notesContainer.classList.add('notes-container--visible');
+	}
+
+}
+
+/**
+ * Original implementation by jeremenichelli.io @ https://css-tricks.com/building-progress-ring-quickly/
+ */
+class ProgressRing
+{
+	private progressRing: SVGCircleElement;
+	private circumference: number;
+	
+	constructor(progressRing: SVGCircleElement)
+	{
+		this.progressRing = progressRing;
+		const radius = this.progressRing.r.baseVal.value;
+		this.circumference = radius * 2 * Math.PI;
+		
+		this.progressRing.style.strokeDasharray = `${this.circumference} ${this.circumference}`;
+		this.progressRing.style.strokeDashoffset = `${this.circumference}`;
+	}
+
+	/**
+	 * Updates the progress ring's progress.
+	 * @param progress a number between 0 and 1
+	 */
+	private SetProgress(progress: number)
+	{
+		const offset = this.circumference - progress * this.circumference;
+		this.progressRing.style.strokeDashoffset = offset.toString();
 	}
 }
 

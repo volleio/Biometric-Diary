@@ -53,7 +53,7 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 // @ts-ignore
 const apiLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 10,
+	max: DEBUG ? 1000 : 10,
 	message: { error: 'Too many login requests. Please wait 15 minutes and try again.' }
 });
 app.use('/login', apiLimiter);
