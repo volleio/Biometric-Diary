@@ -385,48 +385,88 @@ class BiometricDiary {
 		
 		this.firstNoteInput.addEventListener('keydown', (evt) => 
 		{
-			requestAnimationFrame(() => 
-			{
-				this.keysPressed++;
-				this.keysPressedSinceQualityUpdate++;
-				this.keysPressedSinceMatchUpdate++;
-
-				this.UpdateAuthUpdateProgressRing();
-
-				/**
-				 * Before checking a typing pattern against TypingDNA's API, the typing pattern must meet a minimum 
-				 * typing pattern quality, or must exceed the maximum number of keypresses for a single match update.
-				 */
-
-				 // Check typing quality every few (~10) characters
-				if (this.keysPressedSinceQualityUpdate >= BiometricDiary.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
-				{
-					this.keysPressedSinceQualityUpdate = 0;
-
-					const typingPattern: String = this.typingDna.getTypingPattern({
-						type: 2,
-						text: this.firstNoteInput.value
-					});
-
-					if (typingPattern == null)
-						return;
-
-					this.currentPatternQuality = this.typingDna.getQuality(typingPattern);
-					// Check against API once the quality (~0.5) or character threshold (~50) has been met
-					if (this.currentPatternQuality >= BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY ||
-						this.keysPressedSinceMatchUpdate >= BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES)
-					{
-						this.currentPatternQuality = 0;
-						this.keysPressedSinceMatchUpdate = 0;
-
-						// Reset auth update progress
-						this.authUpdateProgressRing.SetProgress(0);
-
-						// Send typing pattern to server
-					}
-				}
-			});
+			requestAnimationFrame(() => this.OnFirstNoteValueUpdate());
 		});
+	}
+
+	private OnFirstNoteValueUpdate(): void
+	{
+		this.keysPressed++;
+		this.keysPressedSinceQualityUpdate++;
+		this.keysPressedSinceMatchUpdate++;
+
+		this.UpdateAuthUpdateProgressRing();
+
+		/**
+		 * Before checking a typing pattern against TypingDNA's API, the typing pattern must meet a minimum 
+		 * typing pattern quality, or must exceed the maximum number of keypresses for a single match update.
+		 */
+
+			// Check typing quality every few (~10) characters
+		if (this.keysPressedSinceQualityUpdate >= BiometricDiary.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
+		{
+			this.keysPressedSinceQualityUpdate = 0;
+
+			const typingPattern: String = this.typingDna.getTypingPattern({
+				type: 2,
+				text: this.firstNoteInput.value
+			});
+
+			if (typingPattern == null)
+				return;
+
+			/** 
+			 * TODO: this call is always returning 0. Debugging TypingDNA's getQuality function suggests that the 
+			 * issue is with the API, because it's calling Number() on each typingPattern string separated by commas, 
+			 * which is returning NaN when it reaches each '|' character
+			 */
+			this.currentPatternQuality = this.typingDna.getQuality(typingPattern);
+
+			// Check against API once the quality (~0.5) or character threshold (~50) has been met
+			if (this.currentPatternQuality >= BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY ||
+				this.keysPressedSinceMatchUpdate >= BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES)
+			{
+				this.currentPatternQuality = 0;
+				this.keysPressedSinceMatchUpdate = 0;
+
+				// Reset auth update progress
+				this.authUpdateProgressRing.SetProgress(0);
+
+				// Send typing pattern to server
+				this.SubmitFirstNoteTypingPattern();
+			}
+		}
+	}
+
+	private async SubmitFirstNoteTypingPattern()
+	{
+		const firstNoteValue = this.firstNoteInput.value;
+
+		const typingPattern: String = this.typingDna.getTypingPattern({
+			type: 2,
+			text: firstNoteValue
+		});
+		
+		let firstNoteMatchResult;
+		try
+		{
+			firstNoteMatchResult = await (await fetch('/authenticate-note', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					typingPattern: typingPattern
+				})
+			})).json();
+		}
+		catch(err)
+		{
+			console.error(err);
+			firstNoteMatchResult = { loginStatus: LoginStatus.error };
+		}
+
+		console.log(firstNoteMatchResult);
 	}
 
 	private UpdateAuthUpdateProgressRing(): void
