@@ -21,7 +21,8 @@ const MONGODB_DBNAME = process.env.MONGODB_DBNAME || 'biometric-diary';
 const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
 const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
-const TYPINGDNA_MIN_SCORE = 50;
+const TYPINGDNA_MIN_SCORE = 50; // 0 - 100
+const MIN_FIRST_NOTE_LENGTH = 50; // # of characters
 
 const DEBUG = SESSION_SECRET === 'debug';
 
@@ -73,13 +74,13 @@ app.post('/login', async (req, res) => {
 	
 	// Prevent mongo injection attacks
 	if (typeof loginInput !== 'string' || loginInput.startsWith('$'))
-		return res.status(401).send({ loginStatus: LoginStatus.failure });
+		return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
 
 	// check if user exists
-	let userLoginData;
+	let userData;
 	try 
 	{
-		userLoginData = await loginDataDb.findOne({ _id: loginInput.toLowerCase() });
+		userData = await loginDataDb.findOne({ _id: loginInput.toLowerCase() });
 	}
 	catch (err)
 	{
@@ -88,19 +89,19 @@ app.post('/login', async (req, res) => {
         return res.status(500).send();
 	}
 
-	if (!userLoginData || !userLoginData.id_patterns || userLoginData.id_patterns.length < 2)
+	if (!userData || !userData.id_patterns || userData.id_patterns.length < 2)
 	{
 		req.session.key = loginInput;
 		req.session.loginQuality = 0;
 		req.session.typingPattern = typingPattern;
-		return res.send({ loginStatus: LoginStatus.userNotFound });
+		return res.send({ authenticationStatus: AuthenticationStatus.userNotFound });
 	}
 
-	let recentIdLoginPatterns = userLoginData.id_patterns[userLoginData.id_patterns.length - 1];
+	let recentIdLoginPatterns = userData.id_patterns[userData.id_patterns.length - 1];
 	// TODO: calling TypingDNA's match with more than one previous pattern results in 445, invalid typing pattern.
 	// 		 are the patterns not being concatenated correctly?
-	// for (let i = userLoginData.id_patterns.length - 2; i >= 0 && i > userLoginData.id_patterns.length - 5; i--)
-	// 	recentIdLoginPatterns += ';' + userLoginData.id_patterns;
+	// for (let i = userData.id_patterns.length - 2; i >= 0 && i > userData.id_patterns.length - 5; i--)
+	// 	recentIdLoginPatterns += ';' + userData.id_patterns;
 
 	let matchResult;
 	try
@@ -114,36 +115,122 @@ app.post('/login', async (req, res) => {
 	{
 		console.error('Error attempting to match typing string in a login call:');
 		console.error(err);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 
 	if (matchResult.status != 200)
 	{
 		console.error(`Match typing string in login call returned ${matchResult.status}:`);
 		console.error(`${matchResult.name}:${matchResult.message}`);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
 	{
-		return res.status(401).send({ loginStatus: LoginStatus.failure });
+		return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
 	}
 
 	// Successful login, save new typing pattern to account
 	try
 	{
-		const userLoginData = await loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern }});
+		await loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern }});
 	}
 	catch(err)
 	{
 		console.error('Error attempting to save new account to db in login call:');
 		console.error(err);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 
 	req.session.key = loginInput;
 	req.session.successfulLogin = true;
 	req.session.loginQuality = matchResult.score;
-	return res.send({ loginStatus: LoginStatus.success });
+
+	// Cache user's data in session so that we don't have to hit the db on later requests
+	req.session.userData = userData;
+	
+	return res.send({ authenticationStatus: AuthenticationStatus.success });
+});
+
+app.post('/authenticate-note', async (req, res) => {
+	if (!req.session || !req.session.id || !req.body.typingPattern || !req.body.noteContents)
+			return res.status(500).send();
+			
+	const typingPattern = req.body.typingPattern;
+	const noteContents = req.body.noteContents;
+	const userData = req.session.userData;
+
+	if (!userData.note_patterns || userData.note_patterns.length < 1)
+	{
+		if (noteContents.length > MIN_FIRST_NOTE_LENGTH)
+		{
+
+		}
+		else
+		{
+
+		}
+	}
+
+	let recentNoteTakingPatterns = userData.note_patterns[userData.note_patterns.length - 1];
+	// TODO: calling TypingDNA's match with more than one previous pattern results in 445, invalid typing pattern.
+	// 		 are the patterns not being concatenated correctly?
+	// for (let i = userData.note_patterns.length - 2; i >= 0 && i > userData.note_patterns.length - 5; i--)
+	// 	recentIdLoginPatterns += ';' + userData.note_patterns;
+
+	let matchResult;
+	try
+	{
+		if (DEBUG)
+			matchResult = { status: 200, score: 100 }
+		else
+			matchResult = await matchTypingString(typingPattern, recentNoteTakingPatterns);
+	}
+	catch(err)
+	{
+		console.error('Error attempting to match typing string in an authenticate-note call:');
+		console.error(err);
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+	}
+
+	if (matchResult.status != 200)
+	{
+		console.error(`Match typing string in login call returned ${matchResult.status}:`);
+		console.error(`${matchResult.name}:${matchResult.message}`);
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+	}
+	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
+	{
+		return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
+	}
+
+	// Successful authentication, save the new typing pattern to the user's account
+	try
+	{
+		await loginDataDb.updateOne({ _id: req.session.id.toLowerCase() }, { $push: { note_pattern: typingPattern }});
+	}
+	catch(err)
+	{
+		console.error('Error attempting to save note taking pattern to db in authenticate-note call:');
+		console.error(err);
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+	}
+
+	// Then save the first note's contents to the user's account
+	try
+	{
+		await saveNote({
+
+		} as NoteData);
+	}
+	catch(err)
+	{
+		console.error('Error attempting to save note contents to db in authenticate-note call:')
+		console.error(err);
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+	}
+
+	req.session.successfulAuthentication = true;
+	return res.send({ authenticationStatus: AuthenticationStatus.success });
 });
 
 app.post('/create-account', async (req, res) => {
@@ -165,24 +252,24 @@ app.post('/create-account', async (req, res) => {
 	{
 		console.error('Error attempting to match typing string in a create-account call:');
 		console.error(err);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 
 	if (matchResult.status != 200)
 	{
 		console.error(`Match typing string in a create-account call returned ${matchResult.status}:`);
 		console.error(`${matchResult.name}:${matchResult.message}`);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
 	{
-		return res.status(401).send({ loginStatus: LoginStatus.failure });
+		return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
 	}
 	
 	// Successful initial username creation, save new account
 	try
 	{
-		const userLoginData = await loginDataDb.insertOne({ 
+		const accountCreationResult = await loginDataDb.insertOne({ 
 				_id: req.session.key.toLowerCase(),
 				id_patterns: [previousTypingPattern, typingPattern],
 			});
@@ -191,12 +278,12 @@ app.post('/create-account', async (req, res) => {
 	{
 		console.error('Error attempting to save new account to db in create-account call:');
 		console.error(err);
-		return res.status(500).send({ loginStatus: LoginStatus.error });
+		return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 	}
 
 	req.session.successfulLogin = true;
 	req.session.loginQuality = 1;
-	return res.send({ loginStatus: LoginStatus.success });
+	return res.send({ authenticationStatus: AuthenticationStatus.success });
 });
 
 app.post('/logout', async (req, res) => {
@@ -241,8 +328,19 @@ async function matchTypingString(newTypingPattern: string, oldTypingPattern: str
 	})).json();
 }
 
+async function saveNote(noteData: NoteData)
+{
+	return;
+}
 
-enum LoginStatus {
+interface NoteData {
+	Id: string;
+	Contents: string;
+	DateCreated: Date;
+	DateUpdated: Date;
+}
+
+enum AuthenticationStatus {
 	success,
 	userNotFound,
 	accountCreated,

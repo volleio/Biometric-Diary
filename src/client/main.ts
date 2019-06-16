@@ -140,25 +140,25 @@ class BiometricDiary {
 		catch(err)
 		{
 			console.error(err);
-			loginResult = { loginStatus: LoginStatus.error };
+			loginResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
-		switch(loginResult.loginStatus)
+		switch(loginResult.authenticationStatus)
 		{
-			case LoginStatus.success:
+			case AuthenticationStatus.success:
 				this.OnLoginSuccess();
 				break;
 
-			case LoginStatus.userNotFound:
+			case AuthenticationStatus.userNotFound:
 				this.OnUserNotFound(loginValue);
 				break;
 
-			case LoginStatus.failure:
+			case AuthenticationStatus.failure:
 				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
 				break;
 
-			case LoginStatus.error:
+			case AuthenticationStatus.error:
 			default:
 				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.ErrorLogin);
@@ -233,21 +233,21 @@ class BiometricDiary {
 		catch(err)
 		{
 			console.error(err);
-			createAccountResult = { loginStatus: LoginStatus.error };
+			createAccountResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
-		switch (createAccountResult.loginStatus)
+		switch (createAccountResult.authenticationStatus)
 		{
-			case LoginStatus.success:
+			case AuthenticationStatus.success:
 				this.OnLoginSuccess();
 				break;
 
-			case LoginStatus.failure:
+			case AuthenticationStatus.failure:
 				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);			
 				break;
 
-			case LoginStatus.error:
+			case AuthenticationStatus.error:
 			default:
 				this.loginInput.removeAttribute('disabled');
 				this.UpdateLoginHelp(false, false, HelpStates.ErrorLogin, LANG_DICT.Login.ErrorLogin);
@@ -456,14 +456,15 @@ class BiometricDiary {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					typingPattern: typingPattern
+					noteContents: firstNoteValue,
+					typingPattern: typingPattern,
 				})
 			})).json();
 		}
 		catch(err)
 		{
 			console.error(err);
-			firstNoteMatchResult = { loginStatus: LoginStatus.error };
+			firstNoteMatchResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
 		console.log(firstNoteMatchResult);
@@ -524,7 +525,7 @@ enum HelpStates {
 	ErrorLogin,
 }
 
-enum LoginStatus {
+enum AuthenticationStatus {
 	success,
 	userNotFound,
 	accountCreated,
