@@ -22,7 +22,7 @@ const TYPINGDNA_APIKEY = process.env.TYPINGDNA_APIKEY;
 const TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 
 const TYPINGDNA_MIN_SCORE = 50; // 0 - 100
-const MIN_FIRST_NOTE_LENGTH = 50; // # of characters
+const MIN_FIRST_NOTE_LENGTH = 100; // # of characters
 
 const DEBUG = SESSION_SECRET === 'debug';
 
@@ -67,7 +67,7 @@ app.get('/', (req, res) => res.render('pages/index'));
 
 app.post('/login', async (req, res) => {
 	if (!req.session)
-			return res.status(500).send();
+			return res.status(500).send(); // Is redis running?
 			
 	const loginInput = req.body.loginId;
 	const typingPattern = req.body.typingPattern;
@@ -152,7 +152,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/authenticate-note', async (req, res) => {
-	if (!req.session || !req.session.id || !req.body.typingPattern || !req.body.noteContents)
+	if (!req.session || !req.session.key || !req.body.typingPattern || !req.body.noteContents)
 			return res.status(500).send();
 			
 	const typingPattern = req.body.typingPattern;
@@ -161,13 +161,48 @@ app.post('/authenticate-note', async (req, res) => {
 
 	if (!userData.note_patterns || userData.note_patterns.length < 1)
 	{
-		if (noteContents.length > MIN_FIRST_NOTE_LENGTH)
+		if (noteContents.length >= MIN_FIRST_NOTE_LENGTH)
 		{
+			// Save the very first note taken's typing pattern and contents, then return a successful authentication
+			try
+			{
+				await loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern }});
+			}
+			catch(err)
+			{
+				console.error('Error attempting to save note taking pattern to db in authenticate-note call:');
+				console.error(err);
+				return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+			}
 
+			try
+			{
+				await saveNote({
+					Id: req.session.key,
+					Contents: noteContents,
+					DateCreated: new Date(),
+					DateUpdated: new Date()
+				} as NoteData);
+			}
+			catch(err)
+			{
+				console.error('Error attempting to save note contents to db in authenticate-note call:')
+				console.error(err);
+				return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
+			}
+			
+			req.session.successfulAuthentication = true;			
+			return res.send({ 
+				authenticationStatus: AuthenticationStatus.success,
+				authenticationProgress: 1
+			});
 		}
 		else
 		{
-
+			return res.status(401).send({ 
+				authenticationStatus: AuthenticationStatus.failure,
+				authenticationProgress: 0.5
+			});
 		}
 	}
 
@@ -200,13 +235,16 @@ app.post('/authenticate-note', async (req, res) => {
 	}
 	else if (matchResult.score < TYPINGDNA_MIN_SCORE)
 	{
-		return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
+		return res.status(401).send({ 
+			authenticationStatus: AuthenticationStatus.failure,
+			authenticationProgress: TYPINGDNA_MIN_SCORE / matchResult.score
+		});
 	}
 
 	// Successful authentication, save the new typing pattern to the user's account
 	try
 	{
-		await loginDataDb.updateOne({ _id: req.session.id.toLowerCase() }, { $push: { note_pattern: typingPattern }});
+		await loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern }});
 	}
 	catch(err)
 	{
@@ -230,7 +268,10 @@ app.post('/authenticate-note', async (req, res) => {
 	}
 
 	req.session.successfulAuthentication = true;
-	return res.send({ authenticationStatus: AuthenticationStatus.success });
+	return res.send({ 
+		authenticationStatus: AuthenticationStatus.success,
+		authenticationProgress: 1
+	 });
 });
 
 app.post('/create-account', async (req, res) => {

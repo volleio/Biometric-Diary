@@ -431,6 +431,7 @@ class BiometricDiary {
 
 				// Reset auth update progress
 				this.authUpdateProgressRing.SetProgress(0);
+				this.authUpdateProgressRing.RotateRing();
 
 				// Send typing pattern to server
 				this.SubmitFirstNoteTypingPattern();
@@ -494,6 +495,7 @@ class ProgressRing
 {
 	public progressRing: SVGCircleElement;
 	private circumference: number;
+	private rotation = 0;
 	
 	constructor(progressRing: SVGCircleElement)
 	{
@@ -509,10 +511,16 @@ class ProgressRing
 	 * Updates the progress ring's progress.
 	 * @param progress a number between 0 and 1
 	 */
-	public SetProgress(progress: number)
+	public SetProgress(progress: number): void
 	{
 		const offset = this.circumference - progress * this.circumference;
 		this.progressRing.style.strokeDashoffset = offset.toString();
+	}
+
+	public RotateRing(): void
+	{
+		this.rotation += 360;
+		this.progressRing.parentElement.style.transform = `rotate(${this.rotation}deg)`;
 	}
 }
 

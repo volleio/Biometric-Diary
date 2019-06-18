@@ -449,6 +449,10 @@ em {
     }
 }
 
+.progress-ring {
+    transform: rotate(0deg);
+}
+
 .progress-ring__circle {
     transition: stroke-dashoffset 0.35s;
     transform: rotate(-90deg);
