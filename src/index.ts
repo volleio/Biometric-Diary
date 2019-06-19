@@ -10,6 +10,7 @@ import * as favicon from 'serve-favicon';
 import * as mongodb from 'mongodb';
 import fetch from 'node-fetch';
 import * as querystring from 'querystring';
+import * as crypto from 'crypto';
 
 env.config();
 const PORT = process.env.PORT || 5000;
@@ -178,8 +179,9 @@ app.post('/authenticate-note', async (req, res) => {
 			try
 			{
 				await saveNote({
-					Id: req.session.key,
-					Contents: noteContents,
+					UserId: req.session.key,
+					Id: generateUuid(),
+					Content: noteContents,
 					DateCreated: new Date(),
 					DateUpdated: new Date()
 				} as NoteData);
@@ -310,10 +312,10 @@ app.post('/create-account', async (req, res) => {
 	// Successful initial username creation, save new account
 	try
 	{
-		const accountCreationResult = await loginDataDb.insertOne({ 
-				_id: req.session.key.toLowerCase(),
-				id_patterns: [previousTypingPattern, typingPattern],
-			});
+		await loginDataDb.insertOne({ 
+			_id: req.session.key.toLowerCase(),
+			id_patterns: [previousTypingPattern, typingPattern],
+		});
 	}
 	catch(err)
 	{
@@ -371,12 +373,43 @@ async function matchTypingString(newTypingPattern: string, oldTypingPattern: str
 
 async function saveNote(noteData: NoteData)
 {
-	return;
+	// Check if the note exists already
+	const existingNote = await loginDataDb.findOne({ 
+		_id: noteData.UserId.toLowerCase(),
+		notes: { _id: noteData.Id }
+	}, { projection: { notes: 1 } });
+
+	if (!existingNote)
+	{
+		// Insert new note
+		await loginDataDb.updateOne({ _id: noteData.UserId.toLowerCase() }, { $push: { 
+			notes: {
+				_id: noteData.Id,
+				date_created: noteData.DateCreated,
+				date_updated: noteData.DateUpdated,
+				content: noteData.Content,
+			} 
+		}});
+	}
+	else
+	{
+		// Update existing note
+
+	}
+}
+
+// From https://gist.github.com/jed/982883
+function generateUuid(): String
+{
+	return (([1e7] as any +-1e3+-4e3+-8e3+-1e11) as String).replace(/[018]/g, c =>
+		(c as any ^ crypto.randomBytes(1)[0] % 16 >> (c as any) / 4).toString(16)
+	);
 }
 
 interface NoteData {
+	UserId: string;
 	Id: string;
-	Contents: string;
+	Content: string;
 	DateCreated: Date;
 	DateUpdated: Date;
 }
