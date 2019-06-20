@@ -1,4 +1,4 @@
-class BiometricDiary {
+class BiometricDiaryClient {
 	private mainContainer: HTMLElement;
 	private typingDna: any;
 
@@ -403,7 +403,7 @@ class BiometricDiary {
 		 */
 
 			// Check typing quality every few (~10) characters
-		if (this.keysPressedSinceQualityUpdate >= BiometricDiary.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
+		if (this.keysPressedSinceQualityUpdate >= BiometricDiaryClient.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
 		{
 			this.keysPressedSinceQualityUpdate = 0;
 
@@ -423,8 +423,8 @@ class BiometricDiary {
 			this.currentPatternQuality = this.typingDna.getQuality(typingPattern);
 
 			// Check against API once the quality (~0.5) or character threshold (~50) has been met
-			if (this.currentPatternQuality >= BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY ||
-				this.keysPressedSinceMatchUpdate >= BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES)
+			if (this.currentPatternQuality >= BiometricDiaryClient.MATCH_UPDATE_MINIMUM_QUALITY ||
+				this.keysPressedSinceMatchUpdate >= BiometricDiaryClient.MATCH_UPDATE_MAXIMUM_KEYPRESSES)
 			{
 				this.currentPatternQuality = 0;
 				this.keysPressedSinceMatchUpdate = 0;
@@ -477,8 +477,8 @@ class BiometricDiary {
 		 * While half of auth update progress is current pattern quality and half is the distance to the max keypresses,
 		 * the progress should appear to "ease-out", or have diminishing returns
 		 */
-		const qualityProgress = this.currentPatternQuality / BiometricDiary.MATCH_UPDATE_MINIMUM_QUALITY;
-		const maxKeypressProgress = this.keysPressedSinceMatchUpdate / BiometricDiary.MATCH_UPDATE_MAXIMUM_KEYPRESSES;
+		const qualityProgress = this.currentPatternQuality / BiometricDiaryClient.MATCH_UPDATE_MINIMUM_QUALITY;
+		const maxKeypressProgress = this.keysPressedSinceMatchUpdate / BiometricDiaryClient.MATCH_UPDATE_MAXIMUM_KEYPRESSES;
 		let progress = (qualityProgress + maxKeypressProgress) / 2;
 
 		// asymptotic function y = -20^(-x) + 1
@@ -542,4 +542,4 @@ enum AuthenticationStatus {
 	error
 }
 
-const biometricDiary = new BiometricDiary();
+const biometricDiary = new BiometricDiaryClient();
