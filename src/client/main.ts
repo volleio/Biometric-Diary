@@ -24,13 +24,18 @@ class BiometricDiaryClient {
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
 	private firstNoteInput = document.getElementById('note-input') as HTMLTextAreaElement;
 	
+	private onFirstNoteKeyDown: (evt: KeyboardEvent) => void;
+
 	private keysPressed = 0; // Just for stats
 	private keysPressedSinceQualityUpdate = 0;
 	private currentPatternQuality = 0;
 	private keysPressedSinceMatchUpdate = 0;
+
 	private static QUALITY_UPDATE_MINIMUM_KEYPRESSES = 10;
 	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 50;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
+
+	private notesToSave: { [key: string]: HTMLTextAreaElement };
 
 	constructor() 
 	{
@@ -383,10 +388,8 @@ class BiometricDiaryClient {
 		this.typingDna.reset();
 		this.typingDna.addTarget('note-input');
 		
-		this.firstNoteInput.addEventListener('keydown', (evt) => 
-		{
-			requestAnimationFrame(() => this.OnFirstNoteValueUpdate());
-		});
+		this.onFirstNoteKeyDown = (evt) => { requestAnimationFrame(() => this.OnFirstNoteValueUpdate()); };
+		this.firstNoteInput.addEventListener('keydown', this.onFirstNoteKeyDown);
 	}
 
 	private OnFirstNoteValueUpdate(): void
@@ -469,6 +472,37 @@ class BiometricDiaryClient {
 		}
 
 		console.log(firstNoteMatchResult);
+		
+		/**
+		 * When we've successfully fully authenticated the user by matching their anytext typing pattern,
+		 * we swap the auth typing event listener out for an event listener that auto saves the note, and
+		 * set up the rest of the user's notes
+		 */
+		if (firstNoteMatchResult.authenticationStatus = AuthenticationStatus.success)
+		{
+			this.firstNoteInput.removeEventListener('keydown', this.onFirstNoteKeyDown);
+			this.SetupNoteToSave(firstNoteMatchResult.noteId, this.firstNoteInput);	
+			
+			this.RequestUserNotes();
+		}
+	}
+
+	private SetupNoteToSave(noteId: string, textArea: HTMLTextAreaElement)
+	{
+		this.firstNoteInput.addEventListener('keydown', (evt) => { 
+			requestAnimationFrame(() => this.OnAnyNoteValueUpdate(noteId, textArea)); 
+		});
+		
+	}
+
+	private OnAnyNoteValueUpdate(noteId: string, textArea: HTMLTextAreaElement): void
+	{
+		this.notesToSave[noteId] = textArea;
+	}
+
+	private RequestUserNotes(): void
+	{
+
 	}
 
 	private UpdateAuthUpdateProgressRing(): void

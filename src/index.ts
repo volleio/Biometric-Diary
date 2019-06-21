@@ -228,11 +228,12 @@ class BiometricDiaryServer
 					return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 				}
 
+				const noteId = this.GenerateUuid();
 				try
 				{
 					await this.SaveNote({
 						UserId: req.session.key,
-						Id: this.GenerateUuid(),
+						Id: noteId,
 						Content: noteContents,
 						DateCreated: new Date(),
 						DateUpdated: new Date()
@@ -248,7 +249,8 @@ class BiometricDiaryServer
 				req.session.successfulAuthentication = true;			
 				return res.send({ 
 					authenticationStatus: AuthenticationStatus.success,
-					authenticationProgress: 1
+					authenticationProgress: 1,
+					noteId: noteId
 				});
 			}
 			else
