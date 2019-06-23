@@ -1,4 +1,5 @@
 import * as env from 'dotenv';
+env.config();
 import * as express from 'express';
 import * as session from 'express-session';
 import * as redis from 'redis';
@@ -44,9 +45,7 @@ class BiometricDiaryServer
 	}
 
 	private Initialize(): void
-	{
-		env.config();
-		
+	{		
 		const RedisStore = connectRedis(session);
 		const redisClient = redis.createClient(BiometricDiaryServer.REDIS_URL);
 		this.redisSessionStore = new RedisStore({
