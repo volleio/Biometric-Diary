@@ -18,7 +18,7 @@ class BiometricDiaryClient {
 	
 	private loginId = '';
 
-	private authMatchProgressRing: ProgressRing;
+	private authMatchProgressRing.partialRotation: ProgressRing;
 	private authUpdateProgressRing: ProgressRing;
 
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
@@ -357,7 +357,7 @@ class BiometricDiaryClient {
 		const authUpdateProgressRingCircle = this.loginAuthBadge.querySelector('.auth-update-progress-ring > .progress-ring__circle') as SVGCircleElement;
 		this.authUpdateProgressRing = new ProgressRing(authUpdateProgressRingCircle);
 		const authMatchProgressRingCircle = this.loginAuthBadge.querySelector('.auth-match-progress-ring > .progress-ring__circle') as SVGCircleElement;
-		this.authMatchProgressRing = new ProgressRing(authMatchProgressRingCircle);
+		this.authMatchProgressRing.partialRotation = new ProgressRing(authMatchProgressRingCircle);
 
 		// Set up main menu
 		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
@@ -405,7 +405,7 @@ class BiometricDiaryClient {
 		 * typing pattern quality, or must exceed the maximum number of keypresses for a single match update.
 		 */
 
-			// Check typing quality every few (~10) characters
+		// Check typing quality every few (~10) characters
 		if (this.keysPressedSinceQualityUpdate >= BiometricDiaryClient.QUALITY_UPDATE_MINIMUM_KEYPRESSES)
 		{
 			this.keysPressedSinceQualityUpdate = 0;
@@ -472,6 +472,9 @@ class BiometricDiaryClient {
 		}
 
 		console.log(firstNoteMatchResult);
+
+		const authProgress = firstNoteMatchResult.authenticationProgress;
+		this.authMatchProgressRing.partialRotation.SetProgress(authProgress);
 		
 		/**
 		 * When we've successfully fully authenticated the user by matching their anytext typing pattern,
@@ -518,6 +521,10 @@ class BiometricDiaryClient {
 		// asymptotic function y = -20^(-x) + 1
 		progress = 1 - Math.pow(20, -(progress));
 
+		// Auth Update ring only takes up the space remaining inside the Auth Match ring
+		this.authUpdateProgressRing.RotateRing(this.authMatchProgressRing.partialRotation);
+
+
 		this.authUpdateProgressRing.SetProgress(progress);
 	}
 }
@@ -529,7 +536,8 @@ class ProgressRing
 {
 	public progressRing: SVGCircleElement;
 	private circumference: number;
-	private rotation = 0;
+	private fullRotations = 0;
+	private partialRotation = 0;
 	
 	constructor(progressRing: SVGCircleElement)
 	{
@@ -551,10 +559,14 @@ class ProgressRing
 		this.progressRing.style.strokeDashoffset = offset.toString();
 	}
 
-	public RotateRing(): void
+	public RotateRing(degrees?: number): void
 	{
-		this.rotation += 360;
-		this.progressRing.parentElement.style.transform = `rotate(${this.rotation}deg)`;
+		if (degrees == null)
+			this.fullRotations ++;
+		else
+			this.partialRotation = degrees;
+			
+		this.progressRing.parentElement.style.transform = `rotate(${this.fullRotations * 360 + this.partialRotation}deg)`;
 	}
 }
 

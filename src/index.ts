@@ -311,8 +311,13 @@ class BiometricDiaryServer
 		// Then save the first note's contents to the user's account
 		try
 		{
+			const noteId = this.GenerateUuid();
 			await this.SaveNote({
-
+				UserId: req.session.key,
+				Id: noteId,
+				Content: noteContents,
+				DateCreated: new Date(),
+				DateUpdated: new Date()
 			} as NoteData);
 		}
 		catch(err)

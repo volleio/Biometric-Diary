@@ -459,6 +459,11 @@ em {
     transform-origin: 50% 50%;
 }
 
+.auth-match-progress-ring {
+    position: absolute;
+    top: 0;
+}
+
 .main-menu {
     display: none; // flex
     flex-direction: column; 
