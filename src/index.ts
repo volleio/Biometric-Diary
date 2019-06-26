@@ -28,7 +28,7 @@ class BiometricDiaryServer
 	private static TYPINGDNA_APISECRET = process.env.TYPINGDNA_APISECRET;
 	
 	private static TYPINGDNA_MIN_SCORE = 50; // 0 - 100
-	private static MIN_FIRST_NOTE_LENGTH = 100; // # of characters
+	private static MIN_FIRST_NOTE_LENGTH = 150; // # of characters
 	
 	private static DEBUG = BiometricDiaryServer.SESSION_SECRET === 'debug';
 	
@@ -256,7 +256,7 @@ class BiometricDiaryServer
 			{
 				return res.status(401).send({ 
 					authenticationStatus: AuthenticationStatus.failure,
-					authenticationProgress: 0.5
+					authenticationProgress: noteContents.length / BiometricDiaryServer.MIN_FIRST_NOTE_LENGTH
 				});
 			}
 		}

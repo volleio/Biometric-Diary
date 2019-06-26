@@ -420,6 +420,7 @@ em {
     width: 0;
     height: 0;
     transform: rotateZ(-45deg);
+    transition: border-color 0.35s var(--ease-in-out-cubic);
 
     &.animate-in {
         animation: auth-badge-check-in 0.5s ease-in .5s forwards;
@@ -454,7 +455,7 @@ em {
 }
 
 .progress-ring__circle {
-    transition: stroke-dashoffset 0.35s;
+    transition: all 0.35s var(--ease-in-out-cubic);
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
 }

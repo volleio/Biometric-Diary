@@ -15,10 +15,11 @@ class BiometricDiaryClient {
 	private loginButton = this.loginContainer.querySelector('.login-button') as HTMLElement;
 	private loginInput = document.getElementById('login-input') as HTMLInputElement;
 	private loginAuthBadge = this.loginContainer.querySelector('.login-auth-badge') as HTMLElement;
+	private loginAuthBadgeCheck = this.loginAuthBadge.querySelector('.login-auth-badge__check') as HTMLElement;
 	
 	private loginId = '';
 
-	private authMatchProgressRing.partialRotation: ProgressRing;
+	private authMatchProgressRing: ProgressRing;
 	private authUpdateProgressRing: ProgressRing;
 
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
@@ -32,7 +33,7 @@ class BiometricDiaryClient {
 	private keysPressedSinceMatchUpdate = 0;
 
 	private static QUALITY_UPDATE_MINIMUM_KEYPRESSES = 10;
-	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 50;
+	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
 	private notesToSave: { [key: string]: HTMLTextAreaElement };
@@ -350,14 +351,13 @@ class BiometricDiaryClient {
 		this.loginInput.classList.add('login-input--logged-in');
 		
 		this.loginAuthBadge.style.display = 'block';
-		const loginAuthBadgeCheck = this.loginAuthBadge.querySelector('.login-auth-badge__check') as HTMLElement;
-		loginAuthBadgeCheck.classList.add('animate-in');
+		this.loginAuthBadgeCheck.classList.add('animate-in');
 
 		// Set up auth badge progress rings
 		const authUpdateProgressRingCircle = this.loginAuthBadge.querySelector('.auth-update-progress-ring > .progress-ring__circle') as SVGCircleElement;
 		this.authUpdateProgressRing = new ProgressRing(authUpdateProgressRingCircle);
 		const authMatchProgressRingCircle = this.loginAuthBadge.querySelector('.auth-match-progress-ring > .progress-ring__circle') as SVGCircleElement;
-		this.authMatchProgressRing.partialRotation = new ProgressRing(authMatchProgressRingCircle);
+		this.authMatchProgressRing = new ProgressRing(authMatchProgressRingCircle);
 
 		// Set up main menu
 		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
@@ -390,6 +390,7 @@ class BiometricDiaryClient {
 		
 		this.onFirstNoteKeyDown = (evt) => { requestAnimationFrame(() => this.OnFirstNoteValueUpdate()); };
 		this.firstNoteInput.addEventListener('keydown', this.onFirstNoteKeyDown);
+		this.firstNoteInput.focus();
 	}
 
 	private OnFirstNoteValueUpdate(): void
@@ -474,15 +475,18 @@ class BiometricDiaryClient {
 		console.log(firstNoteMatchResult);
 
 		const authProgress = firstNoteMatchResult.authenticationProgress;
-		this.authMatchProgressRing.partialRotation.SetProgress(authProgress);
+		this.authMatchProgressRing.SetProgress(authProgress);
 		
 		/**
 		 * When we've successfully fully authenticated the user by matching their anytext typing pattern,
 		 * we swap the auth typing event listener out for an event listener that auto saves the note, and
 		 * set up the rest of the user's notes
 		 */
-		if (firstNoteMatchResult.authenticationStatus = AuthenticationStatus.success)
+		if (firstNoteMatchResult.authenticationStatus === AuthenticationStatus.success)
 		{
+			this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
+			this.loginAuthBadgeCheck.style.borderColor = '#FFF';
+
 			this.firstNoteInput.removeEventListener('keydown', this.onFirstNoteKeyDown);
 			this.SetupNoteToSave(firstNoteMatchResult.noteId, this.firstNoteInput);	
 			
@@ -522,10 +526,18 @@ class BiometricDiaryClient {
 		progress = 1 - Math.pow(20, -(progress));
 
 		// Auth Update ring only takes up the space remaining inside the Auth Match ring
-		this.authUpdateProgressRing.RotateRing(this.authMatchProgressRing.partialRotation);
-
-
+		progress *= 1 - this.authMatchProgressRing.progress;
+		progress += this.authMatchProgressRing.progress;
 		this.authUpdateProgressRing.SetProgress(progress);
+	}
+
+	private ExecuteWithoutTransition(element: HTMLElement, callback: () => void): void
+	{
+		const setTransition = element.style.transition;
+		element.style.transition = "none";
+		callback();
+		getComputedStyle(element).opacity;
+		element.style.transition = setTransition;
 	}
 }
 
@@ -534,10 +546,12 @@ class BiometricDiaryClient {
  */
 class ProgressRing
 {
-	public progressRing: SVGCircleElement;
 	private circumference: number;
 	private fullRotations = 0;
 	private partialRotation = 0;
+
+	public progressRing: SVGCircleElement;
+	public progress = 0;
 	
 	constructor(progressRing: SVGCircleElement)
 	{
@@ -555,7 +569,8 @@ class ProgressRing
 	 */
 	public SetProgress(progress: number): void
 	{
-		const offset = this.circumference - progress * this.circumference;
+		this.progress = progress;
+		const offset = this.circumference - this.progress * this.circumference;
 		this.progressRing.style.strokeDashoffset = offset.toString();
 	}
 
