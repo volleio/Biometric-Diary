@@ -124,7 +124,7 @@ class BiometricDiaryServer
 		
 		// Prevent mongo injection attacks
 		if (typeof loginInput !== 'string' || loginInput.startsWith('$'))
-			return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
+			return res.status(500).send({ authenticationStatus: AuthenticationStatus.failure });
 		
 		// check if user exists
 		let userData;
@@ -176,7 +176,7 @@ class BiometricDiaryServer
 		}
 		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 		{
-			return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
+			return res.send({ authenticationStatus: AuthenticationStatus.failure });
 		}
 		
 		// Successful login, save new typing pattern to account
@@ -254,7 +254,7 @@ class BiometricDiaryServer
 			}
 			else
 			{
-				return res.status(401).send({ 
+				return res.send({ 
 					authenticationStatus: AuthenticationStatus.failure,
 					authenticationProgress: noteContents.length / BiometricDiaryServer.MIN_FIRST_NOTE_LENGTH
 				});
@@ -290,7 +290,7 @@ class BiometricDiaryServer
 		}
 		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 		{
-			return res.status(401).send({ 
+			return res.send({ 
 				authenticationStatus: AuthenticationStatus.failure,
 				authenticationProgress: BiometricDiaryServer.TYPINGDNA_MIN_SCORE / matchResult.score
 			});
@@ -365,7 +365,7 @@ class BiometricDiaryServer
 		}
 		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 		{
-			return res.status(401).send({ authenticationStatus: AuthenticationStatus.failure });
+			return res.send({ authenticationStatus: AuthenticationStatus.failure });
 		}
 
 		// Successful initial username creation, save new account

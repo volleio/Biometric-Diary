@@ -36,7 +36,7 @@ class BiometricDiaryClient {
 	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
-	private notesToSave: { [key: string]: HTMLTextAreaElement };
+	private notesToSave: { [key: string]: HTMLTextAreaElement } = {};
 
 	constructor() 
 	{
