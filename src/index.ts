@@ -86,7 +86,7 @@ class BiometricDiaryServer
 		
 		this.app.get('/', (req, res) => {
 			let theme = BiometricDiaryServer.THEME;
-			if (req.query.theme && req.query.theme instanceof String && BiometricDiaryServer.ALLOWED_THEMES.includes(req.query.theme))
+			if (req.query.theme && typeof(req.query.theme) === 'string' && BiometricDiaryServer.ALLOWED_THEMES.includes(req.query.theme))
 				theme = req.query.theme;
 			res.render('pages/index', { theme: theme })
 
