@@ -32,6 +32,9 @@ class BiometricDiaryServer
 	
 	private static DEBUG = BiometricDiaryServer.SESSION_SECRET === 'debug';
 	
+	private static THEME = process.env.THEME || '';
+	private static ALLOWED_THEMES = [ 'alt-text' ];
+
 	/**
 	 * Member vars
 	 */
@@ -81,7 +84,13 @@ class BiometricDiaryServer
 		this.app.set('view engine', 'ejs');
 		this.app.set('trust proxy', 1);
 		
-		this.app.get('/', (req, res) => res.render('pages/index'));
+		this.app.get('/', (req, res) => {
+			let theme = BiometricDiaryServer.THEME;
+			if (req.query.theme && req.query.theme instanceof String && BiometricDiaryServer.ALLOWED_THEMES.includes(req.query.theme))
+				theme = req.query.theme;
+			res.render('pages/index', { theme: theme })
+
+		});
 
 		this.SetupRouting();
 
