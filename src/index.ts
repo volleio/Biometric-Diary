@@ -33,7 +33,7 @@ class BiometricDiaryServer
 	private static DEBUG = BiometricDiaryServer.SESSION_SECRET === 'debug';
 	
 	private static THEME = process.env.THEME || '';
-	private static ALLOWED_THEMES = [ 'alt-text' ];
+	private static ALLOWED_THEMES = [ 'alt-theme' ];
 
 	/**
 	 * Member vars
