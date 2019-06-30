@@ -52,6 +52,11 @@ body {
     color: var(--primary-font-family);
 }
 
+body.alt-theme {
+    --accent-bg-color: #4796F3;
+    --accent-bg-color-transparent: #4796F3BB;
+}
+
 em {
     white-space: nowrap;
 }
@@ -119,6 +124,10 @@ em {
 .primary-button {
     background: var(--accent-bg-color);
     color: var(--txt-color);
+}
+
+body.alt-theme .primary-button {
+    color: #FFF;
 }
 
 .secondary-button {
@@ -371,7 +380,7 @@ body.alt-theme .login-container {
     text-align: center;
     line-height: 32px;
     letter-spacing: 1px;
-    margin-left: 1em;
+    margin: 0 1em;
     display: inline-block;
     border-radius: 50%;
     background: #C4C4C4C4;

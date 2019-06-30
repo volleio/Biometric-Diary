@@ -1,4 +1,5 @@
-let LANG_DICT = {
+declare var theme;
+let LANG_DICT: LanguageDictionary = {
 	Login: {
 		ExtraHelpQuestionMark: '?',
 		EnterEmail: 'please enter your email',
@@ -19,3 +20,42 @@ let LANG_DICT = {
 		MobileWarningText: '<p>Mobile Devices are not fully supported by <em>Biometric Diary</em>.</p><p>Accounts created on desktops cannot be accessed on mobile devices, and accounts created on mobile devices will not be accessible on desktops.</p>',
 	}
 };
+
+let langOverride: LanguageDictionary = {};
+switch(theme)
+{
+	case 'alt-theme':
+		langOverride = {
+			Login: {
+				EnterEmail: '',
+				UserNotFound: 'Have we met before?',
+				CreateAccount: 'No',
+				CancelLogin: 'Yes',
+			}
+		};
+		break;
+}
+
+for (let langCategory in langOverride)
+	Object.assign(LANG_DICT[langCategory], langOverride[langCategory]);
+
+interface LanguageDictionary {
+	Login?: {
+		ExtraHelpQuestionMark?: string;
+		EnterEmail?: string;
+		EnterEmailExtra?: string;
+		LoginButton?: string;
+		UserNotFound?: string;
+		CreateAccount?: string;
+		CancelLogin?: string;
+		RetypeLogin?: (loginId: string) => string;
+		FailedLogin?: string;
+		ErrorLogin?: string;
+	};
+	MainMenu?: {
+		Logout?: string;
+	};
+	Other?: {
+		MobileWarningText?: string;
+	};
+}
