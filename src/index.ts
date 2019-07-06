@@ -119,6 +119,7 @@ class BiometricDiaryServer
 		this.app.post('/login', async (req, res) => this.OnLoginReq(req, res));
 		this.app.post('/authenticate-note', async (req, res) => this.OnAuthenticateNoteReq(req, res));
 		this.app.post('/create-account', async (req, res) => this.OnCreateAccountReq(req, res));
+		this.app.post('/get-notes', async (req, res) => this.OnNotesReq(req, res));
 		this.app.post('/logout', async (req, res) => this.OnLogoutReq(req, res));
 
 	}
@@ -243,9 +244,9 @@ class BiometricDiaryServer
 						UserId: req.session.key,
 						Id: noteId,
 						Content: noteContents,
-						DateCreated: new Date(),
-						DateUpdated: new Date()
-					} as NoteData);
+						DateCreated: new Date().valueOf(),
+						DateUpdated: new Date().valueOf()
+					} as Note);
 				}
 				catch(err)
 				{
@@ -325,9 +326,9 @@ class BiometricDiaryServer
 				UserId: req.session.key,
 				Id: noteId,
 				Content: noteContents,
-				DateCreated: new Date(),
-				DateUpdated: new Date()
-			} as NoteData);
+				DateCreated: new Date().valueOf(),
+				DateUpdated: new Date().valueOf()
+			} as Note);
 		}
 		catch(err)
 		{
@@ -397,6 +398,14 @@ class BiometricDiaryServer
 		return res.send({ authenticationStatus: AuthenticationStatus.success });
 	}
 
+	private async OnNotesReq(req: express.Request, res: express.Response): Promise<express.Response>
+	{
+		if (!req.session || !req.body.beforeDate)
+			return res.status(500).send();
+
+		const beforeDate = new Date(req.body.beforeDate);
+	}
+
 	private async OnLogoutReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
 		if (!req.session)
@@ -424,7 +433,7 @@ class BiometricDiaryServer
 		})).json();
 	}
 
-	private async SaveNote(noteData: NoteData): Promise<any>
+	private async SaveNote(noteData: Note): Promise<any>
 	{
 		// Check if the note exists already
 		const existingNote = await this.loginDataDb.findOne({ 
@@ -463,12 +472,12 @@ class BiometricDiaryServer
 // Start Server
 const biometricDiaryServer = new BiometricDiaryServer();
 
-interface NoteData {
+interface Note {
 	UserId: string;
 	Id: string;
 	Content: string;
-	DateCreated: Date;
-	DateUpdated: Date;
+	DateCreated: number;
+	DateUpdated: number;
 }
 
 enum AuthenticationStatus {

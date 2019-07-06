@@ -36,6 +36,7 @@ class BiometricDiaryClient {
 	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
+	private requestingUserNotes = false;
 	private notesToSave: { [key: string]: HTMLTextAreaElement } = {};
 
 	constructor() 
@@ -507,9 +508,52 @@ class BiometricDiaryClient {
 		this.notesToSave[noteId] = textArea;
 	}
 
-	private RequestUserNotes(): void
+	private async RequestUserNotes(beforeDate: Date): Promise<void>
 	{
+		if (this.requestingUserNotes)
+			return; // Request currently being made
 
+		this.requestingUserNotes = true;
+		let notesRequestResult: NotesRequest;
+		try
+		{
+			notesRequestResult = await (await fetch('/get-notes', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					beforeDate: beforeDate.valueOf()
+				})
+			})).json();
+
+			notesRequestResult.retrievedNotes.forEach((note) =>
+			{
+				
+			});
+
+			// Indicate when the user has reached the end
+			if (notesRequestResult.noAdditionalNotes)
+			{
+				const endOfNotesContainer = document.createElement("div");
+				endOfNotesContainer.classList.add("end-of-notes");
+
+				const endOfNotesMsg = document.createElement("div");
+				endOfNotesContainer.classList.add("end-of-notes__msg");
+				endOfNotesMsg.innerHTML = LANG_DICT.Notes.EndOfNotes;
+				endOfNotesContainer.appendChild(endOfNotesMsg);
+
+				this.notesContainer.appendChild(endOfNotesContainer);
+			}
+		}
+		catch(err)
+		{
+			console.error(err);
+		}
+		finally
+		{
+			this.requestingUserNotes = false;
+		}
 	}
 
 	private UpdateAuthUpdateProgressRing(): void
@@ -601,6 +645,19 @@ enum AuthenticationStatus {
 	accountNotCreated,
 	failure,
 	error
+}
+
+interface Note {
+	UserId: string;
+	Id: string;
+	Content: string;
+	DateCreated: number;
+	DateUpdated: number;
+}
+
+interface NotesRequest {
+	retrievedNotes: Note[];
+	noAdditionalNotes: boolean;
 }
 
 const biometricDiary = new BiometricDiaryClient();
