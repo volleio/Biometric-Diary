@@ -438,6 +438,13 @@ body.alt-theme .login-container {
     &.animate-in {
         animation: auth-badge-check-in 0.5s ease-in .5s forwards;
     }
+
+    &.auth-success {
+        width: 10px;
+        height: 5px;
+        border-bottom: 3px solid #FFF;
+        border-left: 3px solid #FFF;
+    }
 }
 
 @keyframes auth-badge-check-in {
@@ -526,3 +533,30 @@ body.alt-theme .login-container {
     box-shadow: 0 0 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 
+.notes-spinner {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%);
+    opacity: 0;
+}
+
+.end-of-notes {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%);
+    width: 400px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-top: 1px solid #CCC;
+    border-radius: 1px;
+}
+
+.end-of-notes__msg {
+    color: #CCC;
+    font-style: italic;
+}

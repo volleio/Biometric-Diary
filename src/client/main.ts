@@ -486,12 +486,13 @@ class BiometricDiaryClient {
 		if (firstNoteMatchResult.authenticationStatus === AuthenticationStatus.success)
 		{
 			this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
-			this.loginAuthBadgeCheck.style.borderColor = '#FFF';
+			this.loginAuthBadgeCheck.classList.remove('animate-in');
+			this.loginAuthBadgeCheck.classList.add('auth-success');
 
 			this.firstNoteInput.removeEventListener('keydown', this.onFirstNoteKeyDown);
 			this.SetupNoteToSave(firstNoteMatchResult.noteId, this.firstNoteInput);	
 			
-			this.RequestUserNotes();
+			this.RequestUserNotes(new Date());
 		}
 	}
 
@@ -513,6 +514,8 @@ class BiometricDiaryClient {
 		if (this.requestingUserNotes)
 			return; // Request currently being made
 
+		
+
 		this.requestingUserNotes = true;
 		let notesRequestResult: NotesRequest;
 		try
@@ -529,21 +532,16 @@ class BiometricDiaryClient {
 
 			notesRequestResult.retrievedNotes.forEach((note) =>
 			{
-				
+
 			});
 
 			// Indicate when the user has reached the end
 			if (notesRequestResult.noAdditionalNotes)
 			{
-				const endOfNotesContainer = document.createElement("div");
-				endOfNotesContainer.classList.add("end-of-notes");
-
-				const endOfNotesMsg = document.createElement("div");
-				endOfNotesContainer.classList.add("end-of-notes__msg");
+				const endOfNotes = this.notesContainer.querySelector('.end-of-notes') as HTMLElement;
+				const endOfNotesMsg = endOfNotes.querySelector('.end-of-notes__msg') as HTMLElement;
 				endOfNotesMsg.innerHTML = LANG_DICT.Notes.EndOfNotes;
-				endOfNotesContainer.appendChild(endOfNotesMsg);
-
-				this.notesContainer.appendChild(endOfNotesContainer);
+				endOfNotes.style.display = '';
 			}
 		}
 		catch(err)
