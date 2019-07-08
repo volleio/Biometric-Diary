@@ -121,7 +121,6 @@ class BiometricDiaryServer
 		this.app.post('/create-account', async (req, res) => this.OnCreateAccountReq(req, res));
 		this.app.post('/get-notes', async (req, res) => this.OnNotesReq(req, res));
 		this.app.post('/logout', async (req, res) => this.OnLogoutReq(req, res));
-
 	}
 
 	private async OnLoginReq(req: express.Request, res: express.Response): Promise<express.Response>
@@ -205,6 +204,7 @@ class BiometricDiaryServer
 		req.session.successfulLogin = true;
 		req.session.loginQuality = matchResult.score;
 		
+		// TODO: get rid of this
 		// Cache user's data in session so that we don't have to hit the db on later requests
 		req.session.userData = userData;
 		
@@ -404,6 +404,18 @@ class BiometricDiaryServer
 			return res.status(500).send();
 
 		const beforeDate = new Date(req.body.beforeDate);
+
+		let retrievedNotes; 
+		try 
+		{
+			retrievedNotes = await this.loginDataDb.find({ notes: 1 }).sort({ _id: req.session.key.toLowerCase(), notes: { date_created: -1 } });
+		}
+		catch (err)
+		{
+			console.error('Error attempting to retrieve user\'s notes from db in get-notes call:');
+			console.error(err);
+			return res.status(500).send();
+		}
 	}
 
 	private async OnLogoutReq(req: express.Request, res: express.Response): Promise<express.Response>

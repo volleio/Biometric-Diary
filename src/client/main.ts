@@ -476,7 +476,7 @@ class BiometricDiaryClient {
 		console.log(firstNoteMatchResult);
 
 		const authProgress = firstNoteMatchResult.authenticationProgress;
-		this.authMatchProgressRing.SetProgress(authProgress);
+		this.authMatchProgressRing.SetProgress(authProgress * 0.8); // Show max progress of 80%, so that progress doesn't appear to be complete without success
 		
 		/**
 		 * When we've successfully fully authenticated the user by matching their anytext typing pattern,
