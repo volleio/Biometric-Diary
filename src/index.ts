@@ -1,17 +1,17 @@
 import * as env from 'dotenv';
 env.config();
-import * as express from 'express';
-import * as session from 'express-session';
-import * as redis from 'redis';
-import * as connectRedis from 'connect-redis';
-import * as rateLimit from 'express-rate-limit';
 import * as bodyParser from 'body-parser';
-import * as path from 'path';
-import * as favicon from 'serve-favicon';
-import * as mongodb from 'mongodb';
-import fetch from 'node-fetch';
-import * as querystring from 'querystring';
+import * as connectRedis from 'connect-redis';
 import * as crypto from 'crypto';
+import * as express from 'express';
+import * as rateLimit from 'express-rate-limit';
+import * as session from 'express-session';
+import * as mongodb from 'mongodb';
+import nodeFetch from 'node-fetch';
+import * as path from 'path';
+import * as querystring from 'querystring';
+import * as redis from 'redis';
+import * as favicon from 'serve-favicon';
 
 class BiometricDiaryServer
 {
@@ -33,7 +33,7 @@ class BiometricDiaryServer
 	private static DEBUG = BiometricDiaryServer.SESSION_SECRET === 'debug';
 	
 	private static THEME = process.env.THEME || '';
-	private static ALLOWED_THEMES = [ 'alt-theme' ];
+	private static ALLOWED_THEMES = ['alt-theme'];
 
 	/**
 	 * Member vars
@@ -49,11 +49,11 @@ class BiometricDiaryServer
 
 	private Initialize(): void
 	{		
-		const RedisStore = connectRedis(session);
+		const redisStore = connectRedis(session);
 		const redisClient = redis.createClient(BiometricDiaryServer.REDIS_URL);
-		this.redisSessionStore = new RedisStore({
+		this.redisSessionStore = new redisStore({
 			client: redisClient,
-			ttl: 3600
+			ttl: 3600,
 		});
 
 		this.app = express();
@@ -66,7 +66,7 @@ class BiometricDiaryServer
 		
 		this.app.use(bodyParser.json());
 		this.app.use(bodyParser.urlencoded({ extended: true }));
-		this.app.use(favicon(__dirname + '/images/favicon.ico'));
+		this.app.use(favicon(`${__dirname}/images/favicon.ico`));
 		this.app.use('/stylesheets', express.static(path.join(__dirname, 'stylesheets')));
 		this.app.use('/js', express.static(path.join(__dirname, 'client')));
 		this.app.use('/images', express.static(path.join(__dirname, 'images')));
@@ -76,7 +76,7 @@ class BiometricDiaryServer
 		const apiLimiter = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: BiometricDiaryServer.DEBUG ? 1000 : 10,
-			message: { error: 'Too many login requests. Please wait 15 minutes and try again.' }
+			message: { error: 'Too many login requests. Please wait 15 minutes and try again.' },
 		});
 		this.app.use('/login', apiLimiter);
 		
@@ -84,12 +84,13 @@ class BiometricDiaryServer
 		this.app.set('view engine', 'ejs');
 		this.app.set('trust proxy', 1);
 		
-		this.app.get('/', (req, res) => {
+		this.app.get('/', (req, res) => 
+		{
 			let theme = BiometricDiaryServer.THEME;
 			if (req.query.theme && typeof(req.query.theme) === 'string' && BiometricDiaryServer.ALLOWED_THEMES.includes(req.query.theme))
 				theme = req.query.theme;
-			res.render('pages/index', { theme: theme })
 
+			res.render('pages/index', { theme });
 		});
 
 		this.SetupRouting();
@@ -126,7 +127,7 @@ class BiometricDiaryServer
 	private async OnLoginReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
 		if (!req.session)
-				return res.status(500).send(); // Is redis running?
+			return res.status(500).send(); // Is redis running?
 				
 		const loginInput = req.body.loginId;
 		const typingPattern = req.body.typingPattern;
@@ -156,7 +157,7 @@ class BiometricDiaryServer
 			return res.send({ authenticationStatus: AuthenticationStatus.userNotFound });
 		}
 		
-		let recentIdLoginPatterns = userData.id_patterns[userData.id_patterns.length - 1];
+		const recentIdLoginPatterns = userData.id_patterns[userData.id_patterns.length - 1];
 		// TODO: calling TypingDNA's match with more than one previous pattern results in 445, invalid typing pattern.
 		// 		 are the patterns not being concatenated correctly?
 		// for (let i = userData.id_patterns.length - 2; i >= 0 && i > userData.id_patterns.length - 5; i--)
@@ -166,34 +167,33 @@ class BiometricDiaryServer
 		try
 		{
 			if (BiometricDiaryServer.DEBUG)
-				matchResult = { status: 200, score: 100 }
+				matchResult = { status: 200, score: 100 };
 			else
 				matchResult = await this.MatchTypingString(typingPattern, recentIdLoginPatterns);
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to match typing string in a login call:');
 			console.error(err);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
 		
-		if (matchResult.status != 200)
+		if (matchResult.status !== 200)
 		{
 			console.error(`Match typing string in login call returned ${matchResult.status}:`);
 			console.error(`${matchResult.name}:${matchResult.message}`);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
-		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
-		{
+		
+		if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 			return res.send({ authenticationStatus: AuthenticationStatus.failure });
-		}
 		
 		// Successful login, save new typing pattern to account
 		try
 		{
-			await this.loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern }});
+			await this.loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern } });
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to save new account to db in login call:');
 			console.error(err);
@@ -210,7 +210,6 @@ class BiometricDiaryServer
 		
 		return res.send({ authenticationStatus: AuthenticationStatus.success });
 	}
-
 	
 	private async OnAuthenticateNoteReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
@@ -228,9 +227,9 @@ class BiometricDiaryServer
 				// Save the very first note taken's typing pattern and contents, then return a successful authentication
 				try
 				{
-					await this.loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern }});
+					await this.loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern } });
 				}
-				catch(err)
+				catch (err)
 				{
 					console.error('Error attempting to save note taking pattern to db in authenticate-note call:');
 					console.error(err);
@@ -245,33 +244,31 @@ class BiometricDiaryServer
 						Id: noteId,
 						Content: noteContents,
 						DateCreated: new Date().valueOf(),
-						DateUpdated: new Date().valueOf()
-					} as Note);
+						DateUpdated: new Date().valueOf(),
+					} as INote);
 				}
-				catch(err)
+				catch (err)
 				{
-					console.error('Error attempting to save note contents to db in authenticate-note call:')
+					console.error('Error attempting to save note contents to db in authenticate-note call:');
 					console.error(err);
 					return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 				}
 				
 				req.session.successfulAuthentication = true;			
 				return res.send({ 
+					noteId,
 					authenticationStatus: AuthenticationStatus.success,
 					authenticationProgress: 1,
-					noteId: noteId
 				});
 			}
-			else
-			{
-				return res.send({ 
-					authenticationStatus: AuthenticationStatus.failure,
-					authenticationProgress: noteContents.length / BiometricDiaryServer.MIN_FIRST_NOTE_LENGTH
-				});
-			}
+
+			return res.send({ 
+				authenticationStatus: AuthenticationStatus.failure,
+				authenticationProgress: noteContents.length / BiometricDiaryServer.MIN_FIRST_NOTE_LENGTH,
+			});
 		}
 
-		let recentNoteTakingPatterns = userData.note_patterns[userData.note_patterns.length - 1];
+		const recentNoteTakingPatterns = userData.note_patterns[userData.note_patterns.length - 1];
 		// TODO: calling TypingDNA's match with more than one previous pattern results in 445, invalid typing pattern.
 		// 		 are the patterns not being concatenated correctly?
 		// for (let i = userData.note_patterns.length - 2; i >= 0 && i > userData.note_patterns.length - 5; i--)
@@ -281,37 +278,38 @@ class BiometricDiaryServer
 		try
 		{
 			if (BiometricDiaryServer.DEBUG)
-				matchResult = { status: 200, score: 100 }
+				matchResult = { status: 200, score: 100 };
 			else
 				matchResult = await this.MatchTypingString(typingPattern, recentNoteTakingPatterns);
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to match typing string in an authenticate-note call:');
 			console.error(err);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
 
-		if (matchResult.status != 200)
+		if (matchResult.status !== 200)
 		{
 			console.error(`Match typing string in login call returned ${matchResult.status}:`);
 			console.error(`${matchResult.name}:${matchResult.message}`);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
-		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
+		
+		if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 		{
 			return res.send({ 
 				authenticationStatus: AuthenticationStatus.failure,
-				authenticationProgress: BiometricDiaryServer.TYPINGDNA_MIN_SCORE / matchResult.score
+				authenticationProgress: BiometricDiaryServer.TYPINGDNA_MIN_SCORE / matchResult.score,
 			});
 		}
 
 		// Successful authentication, save the new typing pattern to the user's account
 		try
 		{
-			await this.loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern }});
+			await this.loginDataDb.updateOne({ _id: req.session.key.toLowerCase() }, { $push: { note_pattern: typingPattern } });
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to save note taking pattern to db in authenticate-note call:');
 			console.error(err);
@@ -327,12 +325,12 @@ class BiometricDiaryServer
 				Id: noteId,
 				Content: noteContents,
 				DateCreated: new Date().valueOf(),
-				DateUpdated: new Date().valueOf()
-			} as Note);
+				DateUpdated: new Date().valueOf(),
+			} as INote);
 		}
-		catch(err)
+		catch (err)
 		{
-			console.error('Error attempting to save note contents to db in authenticate-note call:')
+			console.error('Error attempting to save note contents to db in authenticate-note call:');
 			console.error(err);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
@@ -340,7 +338,7 @@ class BiometricDiaryServer
 		req.session.successfulAuthentication = true;
 		return res.send({ 
 			authenticationStatus: AuthenticationStatus.success,
-			authenticationProgress: 1
+			authenticationProgress: 1,
 		});
 	}
 
@@ -356,27 +354,26 @@ class BiometricDiaryServer
 		try
 		{
 			if (BiometricDiaryServer.DEBUG)
-				matchResult = { status: 200, score: 100 }
+				matchResult = { status: 200, score: 100 };
 			else
 				matchResult = await this.MatchTypingString(typingPattern, previousTypingPattern);
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to match typing string in a create-account call:');
 			console.error(err);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
 
-		if (matchResult.status != 200)
+		if (matchResult.status !== 200)
 		{
 			console.error(`Match typing string in a create-account call returned ${matchResult.status}:`);
 			console.error(`${matchResult.name}:${matchResult.message}`);
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
-		else if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
-		{
+		
+		if (matchResult.score < BiometricDiaryServer.TYPINGDNA_MIN_SCORE)
 			return res.send({ authenticationStatus: AuthenticationStatus.failure });
-		}
 
 		// Successful initial username creation, save new account
 		try
@@ -386,7 +383,7 @@ class BiometricDiaryServer
 				id_patterns: [previousTypingPattern, typingPattern],
 			});
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error('Error attempting to save new account to db in create-account call:');
 			console.error(err);
@@ -433,24 +430,22 @@ class BiometricDiaryServer
 			headers: {
 				'Content-Type': 'this.application/x-www-form-urlencoded',
 				'Cache-Control': 'no-cache',
-				'Authorization': 'Basic ' + Buffer.from(
-					BiometricDiaryServer.TYPINGDNA_APIKEY + ':' + BiometricDiaryServer.TYPINGDNA_APISECRET
-				).toString('base64'),
+				Authorization: `Basic ${Buffer.from(`${BiometricDiaryServer.TYPINGDNA_APIKEY}:${BiometricDiaryServer.TYPINGDNA_APISECRET}`).toString('base64')}`,
 			},
 			body: querystring.stringify({
 				tp1 : newTypingPattern,
 				tp2 : oldTypingPattern,
 				quality : quality.toString(),
-			})
+			}),
 		})).json();
 	}
 
-	private async SaveNote(noteData: Note): Promise<any>
+	private async SaveNote(noteData: INote): Promise<any>
 	{
 		// Check if the note exists already
 		const existingNote = await this.loginDataDb.findOne({ 
 			_id: noteData.UserId.toLowerCase(),
-			notes: { _id: noteData.Id }
+			notes: { _id: noteData.Id },
 		}, { projection: { notes: 1 } });
 
 		if (!existingNote)
@@ -462,7 +457,7 @@ class BiometricDiaryServer
 					date_created: noteData.DateCreated,
 					date_updated: noteData.DateUpdated,
 					content: noteData.Content,
-				} 
+				},
 			}});
 		}
 		else
@@ -473,10 +468,10 @@ class BiometricDiaryServer
 	}
 
 	// From https://gist.github.com/jed/982883
-	private GenerateUuid(): String
+	private GenerateUuid(): string
 	{
-		return (([1e7] as any +-1e3+-4e3+-8e3+-1e11) as String).replace(/[018]/g, c =>
-			(c as any ^ crypto.randomBytes(1)[0] % 16 >> (c as any) / 4).toString(16)
+		return (([1e7] as any + -1e3 + -4e3 + -8e3 + -1e11) as string).replace(/[018]/g, c =>
+			(c as any ^ crypto.randomBytes(1)[0] % 16 >> (c as any) / 4).toString(16),
 		);
 	}
 }
@@ -484,7 +479,7 @@ class BiometricDiaryServer
 // Start Server
 const biometricDiaryServer = new BiometricDiaryServer();
 
-interface Note {
+interface INote {
 	UserId: string;
 	Id: string;
 	Content: string;
@@ -498,5 +493,5 @@ enum AuthenticationStatus {
 	accountCreated,
 	accountNotCreated,
 	failure,
-	error
+	error,
 }

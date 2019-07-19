@@ -1,5 +1,5 @@
 declare var theme;
-let LANG_DICT: LanguageDictionary = {
+let LANG_DICT: ILanguageDictionary = {
 	Login: {
 		ExtraHelpQuestionMark: '?',
 		EnterEmail: 'please enter your email',
@@ -9,7 +9,7 @@ let LANG_DICT: LanguageDictionary = {
 		UserNotFound: 'User not found, would you like to create an account?',
 		CreateAccount: 'create account',
 		CancelLogin: 'cancel',
-		RetypeLogin: (loginId) => `please retype '${loginId}' to verify your typing pattern`,
+		RetypeLogin: loginId => `please retype '${loginId}' to verify your typing pattern`,
 		FailedLogin: 'Authentication failed, please try again.',
 		ErrorLogin: 'Error with authentication service, please try again later.',
 	},
@@ -20,29 +20,30 @@ let LANG_DICT: LanguageDictionary = {
 		EndOfNotes: 'no more notes',
 	},
 	Other: {
-		MobileWarningText: '<p>Mobile Devices are not fully supported by <em>Biometric Diary</em>.</p><p>Accounts created on desktops cannot be accessed on mobile devices, and accounts created on mobile devices will not be accessible on desktops.</p>',
-	}
+		MobileWarningText: `<p>Mobile Devices are not fully supported by <em>Biometric Diary</em>.</p>
+			<p>Accounts created on desktops cannot be accessed on mobile devices, and accounts created on mobile devices will not be accessible on desktops.</p>`,
+	},
 };
 
-let langOverride: LanguageDictionary = {};
-switch(theme)
+let langOverride: ILanguageDictionary = {};
+switch (theme)
 {
-	case 'alt-theme':
-		langOverride = {
-			Login: {
-				EnterEmail: '',
-				UserNotFound: 'Have we met before?',
-				CreateAccount: 'No',
-				CancelLogin: 'Yes',
-			}
-		};
-		break;
+case 'alt-theme':
+	langOverride = {
+		Login: {
+			EnterEmail: '',
+			UserNotFound: 'Have we met before?',
+			CreateAccount: 'No',
+			CancelLogin: 'Yes',
+		},
+	};
+	break;
 }
 
-for (let langCategory in langOverride)
+for (const langCategory in langOverride)
 	Object.assign(LANG_DICT[langCategory], langOverride[langCategory]);
 
-interface LanguageDictionary {
+interface ILanguageDictionary {
 	Login?: {
 		ExtraHelpQuestionMark?: string;
 		EnterEmail?: string;

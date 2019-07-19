@@ -1,4 +1,8 @@
 class BiometricDiaryClient {
+	private static QUALITY_UPDATE_MINIMUM_KEYPRESSES = 10;
+	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
+	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
+
 	private mainContainer: HTMLElement;
 	private typingDna: any;
 
@@ -31,10 +35,6 @@ class BiometricDiaryClient {
 	private keysPressedSinceQualityUpdate = 0;
 	private currentPatternQuality = 0;
 	private keysPressedSinceMatchUpdate = 0;
-
-	private static QUALITY_UPDATE_MINIMUM_KEYPRESSES = 10;
-	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
-	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
 	private requestingUserNotes = false;
 	private notesToSave: { [key: string]: HTMLTextAreaElement } = {};
@@ -124,9 +124,9 @@ class BiometricDiaryClient {
 		this.loginInput.setAttribute('disabled', '');
 		this.loginButton.setAttribute('disabled', '');
 
-		const typingPattern: String = this.typingDna.getTypingPattern({
+		const typingPattern: string = this.typingDna.getTypingPattern({
 			type: 1,
-			text: loginValue
+			text: loginValue,
 		});
 		this.typingDna.reset();
 		
@@ -139,37 +139,37 @@ class BiometricDiaryClient {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
+					typingPattern,
 					loginId: loginValue,
-					typingPattern: typingPattern
-				})
+				}),
 			})).json();
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error(err);
 			loginResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
-		switch(loginResult.authenticationStatus)
+		switch (loginResult.authenticationStatus)
 		{
-			case AuthenticationStatus.success:
-				this.OnLoginSuccess();
-				break;
+		case AuthenticationStatus.success:
+			this.OnLoginSuccess();
+			break;
 
-			case AuthenticationStatus.userNotFound:
-				this.OnUserNotFound(loginValue);
-				break;
+		case AuthenticationStatus.userNotFound:
+			this.OnUserNotFound(loginValue);
+			break;
 
-			case AuthenticationStatus.failure:
-				this.loginInput.removeAttribute('disabled');
-				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
-				break;
+		case AuthenticationStatus.failure:
+			this.loginInput.removeAttribute('disabled');
+			this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);
+			break;
 
-			case AuthenticationStatus.error:
-			default:
-				this.loginInput.removeAttribute('disabled');
-				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.ErrorLogin);
-				break;
+		case AuthenticationStatus.error:
+		default:
+			this.loginInput.removeAttribute('disabled');
+			this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.ErrorLogin);
+			break;
 		}
 	}
 
@@ -186,7 +186,8 @@ class BiometricDiaryClient {
 		const createAccountButton = document.createElement('button');
 		createAccountButton.className = 'primary-button';
 		createAccountButton.innerText = LANG_DICT.Login.CreateAccount;
-		createAccountButton.addEventListener('click', (evt) => {
+		createAccountButton.addEventListener('click', (evt) => 
+		{
 			this.loginId = loginId;
 
 			this.loginInput.removeAttribute('disabled');
@@ -198,7 +199,8 @@ class BiometricDiaryClient {
 		const cancelButton = document.createElement('button');
 		cancelButton.className = 'secondary-button';
 		cancelButton.innerText = LANG_DICT.Login.CancelLogin;
-		cancelButton.addEventListener('click', (evt) => {
+		cancelButton.addEventListener('click', (evt) => 
+		{
 			this.loginInput.removeAttribute('disabled');
 			this.loginInput.focus();
 			this.loginInput.value = '';
@@ -218,9 +220,9 @@ class BiometricDiaryClient {
 		this.loginInput.setAttribute('disabled', '');
 		this.loginButton.setAttribute('disabled', '');
 
-		const typingPattern: String = this.typingDna.getTypingPattern({
+		const typingPattern: string = this.typingDna.getTypingPattern({
 			type: 1,
-			text: loginValue
+			text: loginValue,
 		});
 		this.typingDna.reset();
 
@@ -233,11 +235,11 @@ class BiometricDiaryClient {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					typingPattern: typingPattern
-				})
+					typingPattern,
+				}),
 			})).json();
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error(err);
 			createAccountResult = { authenticationStatus: AuthenticationStatus.error };
@@ -245,20 +247,20 @@ class BiometricDiaryClient {
 
 		switch (createAccountResult.authenticationStatus)
 		{
-			case AuthenticationStatus.success:
-				this.OnLoginSuccess();
-				break;
+		case AuthenticationStatus.success:
+			this.OnLoginSuccess();
+			break;
 
-			case AuthenticationStatus.failure:
-				this.loginInput.removeAttribute('disabled');
-				this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);			
-				break;
+		case AuthenticationStatus.failure:
+			this.loginInput.removeAttribute('disabled');
+			this.UpdateLoginHelp(false, false, HelpStates.FailedLogin, LANG_DICT.Login.FailedLogin);			
+			break;
 
-			case AuthenticationStatus.error:
-			default:
-				this.loginInput.removeAttribute('disabled');
-				this.UpdateLoginHelp(false, false, HelpStates.ErrorLogin, LANG_DICT.Login.ErrorLogin);
-				break;
+		case AuthenticationStatus.error:
+		default:
+			this.loginInput.removeAttribute('disabled');
+			this.UpdateLoginHelp(false, false, HelpStates.ErrorLogin, LANG_DICT.Login.ErrorLogin);
+			break;
 		}
 	}
 
@@ -361,13 +363,13 @@ class BiometricDiaryClient {
 		this.authMatchProgressRing = new ProgressRing(authMatchProgressRingCircle);
 
 		// Set up main menu
-		const mainMenu = this.loginContainer.querySelector(".main-menu") as HTMLElement;
+		const mainMenu = this.loginContainer.querySelector('.main-menu') as HTMLElement;
 		mainMenu.style.display = 'flex';
 		requestAnimationFrame(() => mainMenu.style.opacity = '1');
 		
 		this.loginContainer.addEventListener('mouseenter', () =>
 		{
-			this.loginContainer.style.height = this.loginContainer.scrollHeight + 'px';
+			this.loginContainer.style.height = `${this.loginContainer.scrollHeight}px`;
 		});
 		
 		this.loginContainer.addEventListener('mouseleave', () =>
@@ -375,7 +377,7 @@ class BiometricDiaryClient {
 			this.loginContainer.style.height = '';
 		});
 		
-		const logoutButton = mainMenu.querySelector(".logout-button") as HTMLElement;
+		const logoutButton = mainMenu.querySelector('.logout-button') as HTMLElement;
 		logoutButton.innerHTML = LANG_DICT.MainMenu.Logout;
 		logoutButton.addEventListener('click', async () =>
 		{
@@ -396,9 +398,9 @@ class BiometricDiaryClient {
 
 	private OnFirstNoteValueUpdate(): void
 	{
-		this.keysPressed++;
-		this.keysPressedSinceQualityUpdate++;
-		this.keysPressedSinceMatchUpdate++;
+		this.keysPressed += 1;
+		this.keysPressedSinceQualityUpdate += 1;
+		this.keysPressedSinceMatchUpdate += 1;
 
 		this.UpdateAuthUpdateProgressRing();
 
@@ -412,9 +414,9 @@ class BiometricDiaryClient {
 		{
 			this.keysPressedSinceQualityUpdate = 0;
 
-			const typingPattern: String = this.typingDna.getTypingPattern({
+			const typingPattern: string = this.typingDna.getTypingPattern({
 				type: 2,
-				text: this.firstNoteInput.value
+				text: this.firstNoteInput.value,
 			});
 
 			if (typingPattern == null)
@@ -448,9 +450,9 @@ class BiometricDiaryClient {
 	{
 		const firstNoteValue = this.firstNoteInput.value;
 
-		const typingPattern: String = this.typingDna.getTypingPattern({
+		const typingPattern: string = this.typingDna.getTypingPattern({
 			type: 2,
-			text: firstNoteValue
+			text: firstNoteValue,
 		});
 		
 		let firstNoteMatchResult;
@@ -462,12 +464,12 @@ class BiometricDiaryClient {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
+					typingPattern,
 					noteContents: firstNoteValue,
-					typingPattern: typingPattern,
-				})
+				}),
 			})).json();
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error(err);
 			firstNoteMatchResult = { authenticationStatus: AuthenticationStatus.error };
@@ -498,7 +500,8 @@ class BiometricDiaryClient {
 
 	private SetupNoteToSave(noteId: string, textArea: HTMLTextAreaElement)
 	{
-		this.firstNoteInput.addEventListener('keydown', (evt) => { 
+		this.firstNoteInput.addEventListener('keydown', (evt) => 
+		{ 
 			requestAnimationFrame(() => this.OnAnyNoteValueUpdate(noteId, textArea)); 
 		});
 		
@@ -514,10 +517,8 @@ class BiometricDiaryClient {
 		if (this.requestingUserNotes)
 			return; // Request currently being made
 
-		
-
 		this.requestingUserNotes = true;
-		let notesRequestResult: NotesRequest;
+		let notesRequestResult: INotesRequest;
 		try
 		{
 			notesRequestResult = await (await fetch('/get-notes', {
@@ -526,8 +527,8 @@ class BiometricDiaryClient {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					beforeDate: beforeDate.valueOf()
-				})
+					beforeDate: beforeDate.valueOf(),
+				}),
 			})).json();
 
 			notesRequestResult.retrievedNotes.forEach((note) =>
@@ -544,7 +545,7 @@ class BiometricDiaryClient {
 				endOfNotes.style.display = '';
 			}
 		}
-		catch(err)
+		catch (err)
 		{
 			console.error(err);
 		}
@@ -576,9 +577,9 @@ class BiometricDiaryClient {
 	private ExecuteWithoutTransition(element: HTMLElement, callback: () => void): void
 	{
 		const setTransition = element.style.transition;
-		element.style.transition = "none";
+		element.style.transition = 'none';
 		callback();
-		getComputedStyle(element).opacity;
+		const forceLayout = getComputedStyle(element).opacity;
 		element.style.transition = setTransition;
 	}
 }
@@ -588,12 +589,12 @@ class BiometricDiaryClient {
  */
 class ProgressRing
 {
+	public progressRing: SVGCircleElement;
+	public progress = 0;
+
 	private circumference: number;
 	private fullRotations = 0;
 	private partialRotation = 0;
-
-	public progressRing: SVGCircleElement;
-	public progress = 0;
 	
 	constructor(progressRing: SVGCircleElement)
 	{
@@ -619,7 +620,7 @@ class ProgressRing
 	public RotateRing(degrees?: number): void
 	{
 		if (degrees == null)
-			this.fullRotations ++;
+			this.fullRotations += 1;
 		else
 			this.partialRotation = degrees;
 			
@@ -642,10 +643,10 @@ enum AuthenticationStatus {
 	accountCreated,
 	accountNotCreated,
 	failure,
-	error
+	error,
 }
 
-interface Note {
+interface INote {
 	UserId: string;
 	Id: string;
 	Content: string;
@@ -653,8 +654,8 @@ interface Note {
 	DateUpdated: number;
 }
 
-interface NotesRequest {
-	retrievedNotes: Note[];
+interface INotesRequest {
+	retrievedNotes: INote[];
 	noAdditionalNotes: boolean;
 }
 
