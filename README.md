@@ -26,7 +26,7 @@ Your app should now be running on [localhost:5000](http://localhost:5000/).
 ## Local Development
 Build in watch mode:
 ```sh
-$ npm run test
+$ npm run dev
 ```
 
 Start the server in watch mode:

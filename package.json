@@ -15,7 +15,7 @@
 		"compile-ts-client": "tsc -p tsconfig.client.json",
 		"compile-sass": "node-sass-chokidar src/stylesheets/ -o build/stylesheets/",
 		"copy-assets": "cpx \"src/**/*.{js,ejs,svg,ico,env}\" ./build",
-		"test": "concurrently \"npm:compile-ts-server-w\" \"npm:compile-ts-client-w\" \"npm:compile-sass-w\" \"npm:copy-assets-w\"",
+		"dev": "concurrently \"npm:compile-ts-server-w\" \"npm:compile-ts-client-w\" \"npm:compile-sass-w\" \"npm:copy-assets-w\"",
 		"compile-ts-server-w": "tsc -w -p tsconfig.server.json",
 		"compile-ts-client-w": "tsc -w -p tsconfig.client.json",
 		"compile-sass-w": "npm run compile-sass && node-sass-chokidar -r -w src/stylesheets/ -o build/stylesheets/ --usePolling --polling-interval 500",
