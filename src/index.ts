@@ -191,7 +191,8 @@ class BiometricDiaryServer
 		// Successful login, save new typing pattern to account
 		try
 		{
-			await this.loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern } });
+			if (typingPattern != null)
+				await this.loginDataDb.updateOne({ _id: loginInput.toLowerCase() }, { $push: { id_patterns: typingPattern } });
 		}
 		catch (err)
 		{
@@ -401,11 +402,17 @@ class BiometricDiaryServer
 			return res.status(500).send();
 
 		const beforeDate = new Date(req.body.beforeDate);
-
 		let retrievedNotes; 
 		try 
 		{
-			retrievedNotes = await this.loginDataDb.find({ notes: 1 }).sort({ _id: req.session.key.toLowerCase(), notes: { date_created: -1 } });
+			retrievedNotes = await this.loginDataDb.find({ 
+					_id: noteData.UserId.toLowerCase(), 
+				}).sort({ 
+					_id: req.session.key.toLowerCase(),
+					notes: {
+						date_created: { $lt: beforeDate }
+					},
+				}).limit(2);
 		}
 		catch (err)
 		{

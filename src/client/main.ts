@@ -27,9 +27,9 @@ class BiometricDiaryClient {
 	private authUpdateProgressRing: ProgressRing;
 
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
-	private firstNoteInput = document.getElementById('note-input') as HTMLTextAreaElement;
+	private initialNoteInput = document.getElementById('initial-note-input') as HTMLTextAreaElement;
 	
-	private onFirstNoteKeyDown: (evt: KeyboardEvent) => void;
+	private onInitialNoteKeyDown: (evt: KeyboardEvent) => void;
 
 	private keysPressed = 0; // Just for stats
 	private keysPressedSinceQualityUpdate = 0;
@@ -389,14 +389,14 @@ class BiometricDiaryClient {
 		this.notesContainer.classList.add('notes-container--visible');
 		this.typingDna.removeTarget('login-input');
 		this.typingDna.reset();
-		this.typingDna.addTarget('note-input');
+		this.typingDna.addTarget('initial-note-input');
 		
-		this.onFirstNoteKeyDown = (evt) => { requestAnimationFrame(() => this.OnFirstNoteValueUpdate()); };
-		this.firstNoteInput.addEventListener('keydown', this.onFirstNoteKeyDown);
-		this.firstNoteInput.focus();
+		this.onInitialNoteKeyDown = (evt) => { requestAnimationFrame(() => this.OnInitialNoteValueUpdate()); };
+		this.initialNoteInput.addEventListener('keydown', this.onInitialNoteKeyDown);
+		this.initialNoteInput.focus();
 	}
 
-	private OnFirstNoteValueUpdate(): void
+	private OnInitialNoteValueUpdate(): void
 	{
 		this.keysPressed += 1;
 		this.keysPressedSinceQualityUpdate += 1;
@@ -416,7 +416,7 @@ class BiometricDiaryClient {
 
 			const typingPattern: string = this.typingDna.getTypingPattern({
 				type: 2,
-				text: this.firstNoteInput.value,
+				text: this.initialNoteInput.value,
 			});
 
 			if (typingPattern == null)
@@ -441,43 +441,43 @@ class BiometricDiaryClient {
 				this.authUpdateProgressRing.RotateRing();
 
 				// Send typing pattern to server
-				this.SubmitFirstNoteTypingPattern();
+				this.SubmitInitialNoteTypingPattern();
 			}
 		}
 	}
 
-	private async SubmitFirstNoteTypingPattern()
+	private async SubmitInitialNoteTypingPattern()
 	{
-		const firstNoteValue = this.firstNoteInput.value;
+		const initialNoteValue = this.initialNoteInput.value;
 
 		const typingPattern: string = this.typingDna.getTypingPattern({
 			type: 2,
-			text: firstNoteValue,
+			text: initialNoteValue,
 		});
 		
-		let firstNoteMatchResult;
+		let initialNoteMatchResult;
 		try
 		{
-			firstNoteMatchResult = await (await fetch('/authenticate-note', {
+			initialNoteMatchResult = await (await fetch('/authenticate-note', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					typingPattern,
-					noteContents: firstNoteValue,
+					noteContents: initialNoteValue,
 				}),
 			})).json();
 		}
 		catch (err)
 		{
 			console.error(err);
-			firstNoteMatchResult = { authenticationStatus: AuthenticationStatus.error };
+			initialNoteMatchResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
-		console.log(firstNoteMatchResult);
+		console.log(initialNoteMatchResult);
 
-		const authProgress = firstNoteMatchResult.authenticationProgress;
+		const authProgress = initialNoteMatchResult.authenticationProgress;
 		this.authMatchProgressRing.SetProgress(authProgress * 0.8); // Show max progress of 80%, so that progress doesn't appear to be complete without success
 		
 		/**
@@ -485,14 +485,15 @@ class BiometricDiaryClient {
 		 * we swap the auth typing event listener out for an event listener that auto saves the note, and
 		 * set up the rest of the user's notes
 		 */
-		if (firstNoteMatchResult.authenticationStatus === AuthenticationStatus.success)
+		if (initialNoteMatchResult.authenticationStatus === AuthenticationStatus.success)
 		{
+			this.authMatchProgressRing.SetProgress(1);
 			this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
 			this.loginAuthBadgeCheck.classList.remove('animate-in');
 			this.loginAuthBadgeCheck.classList.add('auth-success');
 
-			this.firstNoteInput.removeEventListener('keydown', this.onFirstNoteKeyDown);
-			this.SetupNoteToSave(firstNoteMatchResult.noteId, this.firstNoteInput);	
+			this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
+			this.SetupNoteToSave(initialNoteMatchResult.noteId, this.initialNoteInput);	
 			
 			this.RequestUserNotes(new Date());
 		}
@@ -500,7 +501,7 @@ class BiometricDiaryClient {
 
 	private SetupNoteToSave(noteId: string, textArea: HTMLTextAreaElement)
 	{
-		this.firstNoteInput.addEventListener('keydown', (evt) => 
+		this.initialNoteInput.addEventListener('keydown', (evt) => 
 		{ 
 			requestAnimationFrame(() => this.OnAnyNoteValueUpdate(noteId, textArea)); 
 		});
