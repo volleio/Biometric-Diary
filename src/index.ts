@@ -240,8 +240,7 @@ class BiometricDiaryServer
 				const noteId = this.GenerateUuid();
 				try
 				{
-					await this.SaveNote({
-						UserId: req.session.key,
+					await this.SaveNote(req.session.key, {
 						Id: noteId,
 						Content: noteContents,
 						DateCreated: new Date().valueOf(),
@@ -321,9 +320,9 @@ class BiometricDiaryServer
 		try
 		{
 			const noteId = this.GenerateUuid();
-			await this.SaveNote({
-				UserId: req.session.key,
+			await this.SaveNote(req.session.key, {
 				Id: noteId,
+				Index: 1,
 				Content: noteContents,
 				DateCreated: new Date().valueOf(),
 				DateUpdated: new Date().valueOf(),
@@ -402,17 +401,22 @@ class BiometricDiaryServer
 			return res.status(500).send();
 
 		const beforeDate = new Date(req.body.beforeDate);
-		let retrievedNotes; 
+		let retrievedNotesCursor; 
 		try 
 		{
-			retrievedNotes = await this.loginDataDb.find({ 
-					_id: noteData.UserId.toLowerCase(), 
-				}).sort({ 
-					_id: req.session.key.toLowerCase(),
-					notes: {
-						date_created: { $lt: beforeDate }
-					},
-				}).limit(2);
+			retrievedNotesCursor = await this.loginDataDb.find({ 
+				_id: req.session.key.toLowerCase(),
+				notes: {
+					date_created: { $lt: beforeDate },
+				},
+			}).sort({ 
+				notes: {
+					date_created: { $lt: beforeDate },
+				},
+			}).limit(2);
+
+			const retrievedNotes = await (retrievedNotesCursor as mongodb.Cursor).toArray();
+			return res.send(retrievedNotes);
 		}
 		catch (err)
 		{
@@ -447,20 +451,28 @@ class BiometricDiaryServer
 		})).json();
 	}
 
-	private async SaveNote(noteData: INote): Promise<any>
+	private async SaveNote(userId: string, noteData: INote): Promise<any>
 	{
 		// Check if the note exists already
 		const existingNote = await this.loginDataDb.findOne({ 
-			_id: noteData.UserId.toLowerCase(),
+			_id: userId.toLowerCase(),
 			notes: { _id: noteData.Id },
 		}, { projection: { notes: 1 } });
+
+		const highestIndexCursor = await this.loginDataDb.find({ 
+			_id: userId.toLowerCase(),
+		}, { 
+			projection: { notes: { Index: 1 } },
+		}).sort({ notes: { Index: -1 } }).limit(1);
+		const highestIndex = (await highestIndexCursor.toArray())[0];
 
 		if (!existingNote)
 		{
 			// Insert new note
-			await this.loginDataDb.updateOne({ _id: noteData.UserId.toLowerCase() }, { $push: { 
+			await this.loginDataDb.updateOne({ _id: userId.toLowerCase() }, { $push: { 
 				notes: {
 					_id: noteData.Id,
+					index: highestIndex + 1,
 					date_created: noteData.DateCreated,
 					date_updated: noteData.DateUpdated,
 					content: noteData.Content,
@@ -470,7 +482,17 @@ class BiometricDiaryServer
 		else
 		{
 			// Update existing note
-
+			await this.loginDataDb.updateOne({ 
+				_id: userId.toLowerCase(), 
+				notes: { _id: noteData.Id }, 
+			}, { 
+				notes: {
+					_id: noteData.Id,
+					index: highestIndex + 1,
+					date_updated: noteData.DateUpdated,
+					content: noteData.Content,
+				},
+			});
 		}
 	}
 
@@ -487,7 +509,6 @@ class BiometricDiaryServer
 const biometricDiaryServer = new BiometricDiaryServer();
 
 interface INote {
-	UserId: string;
 	Id: string;
 	Content: string;
 	DateCreated: number;

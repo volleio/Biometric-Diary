@@ -650,6 +650,7 @@ enum AuthenticationStatus {
 interface INote {
 	UserId: string;
 	Id: string;
+	Index: number;
 	Content: string;
 	DateCreated: number;
 	DateUpdated: number;

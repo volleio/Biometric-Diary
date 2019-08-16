@@ -81,6 +81,7 @@ em {
 
 #main-spinner {
     animation: fadeInSpinner 0.3s ease-in-out;
+    margin: calc(30vh - var(--spinner-size) / 2) 0;
 }
 
 @keyframes fadeInSpinner {
