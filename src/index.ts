@@ -404,18 +404,23 @@ class BiometricDiaryServer
 		let retrievedNotesCursor; 
 		try 
 		{
-			retrievedNotesCursor = await this.loginDataDb.find({ 
-				_id: req.session.key.toLowerCase(),
-				notes: {
-					date_created: { $lt: beforeDate },
-				},
-			}).sort({ 
-				notes: {
-					date_created: { $lt: beforeDate },
-				},
-			}).limit(2);
+			retrievedNotesCursor = await this.loginDataDb.aggregate([
+				{ $project: { 
+					'notes._id': 1, 
+					'notes.index': 1, 
+					'notes.date_created': 1, 
+					'notes.date_updated': 1, 
+					'notes.content': 1 
+				} }, { 
+					$unwind: '$notes' 
+				}, { 
+					$sort: { 'notes.index': -1 } 
+				}, { 
+					$limit: 2 
+				}
+			]);
 
-			const retrievedNotes = await (retrievedNotesCursor as mongodb.Cursor).toArray();
+			const retrievedNotes = await retrievedNotesCursor.toArray();
 			return res.send(retrievedNotes);
 		}
 		catch (err)
@@ -451,7 +456,7 @@ class BiometricDiaryServer
 		})).json();
 	}
 
-	private async SaveNote(userId: string, noteData: INote): Promise<any>
+	private async SaveNote(userId: string, noteData: INote, firstNote = false): Promise<any>
 	{
 		// Check if the note exists already
 		const existingNote = await this.loginDataDb.findOne({ 
@@ -459,12 +464,23 @@ class BiometricDiaryServer
 			notes: { _id: noteData.Id },
 		}, { projection: { notes: 1 } });
 
-		const highestIndexCursor = await this.loginDataDb.find({ 
-			_id: userId.toLowerCase(),
-		}, { 
-			projection: { notes: { Index: 1 } },
-		}).sort({ notes: { Index: -1 } }).limit(1);
-		const highestIndex = (await highestIndexCursor.toArray())[0];
+		let highestIndex = 0;
+		if (!firstNote)
+		{
+			const highestIndexCursor = await this.loginDataDb.aggregate([
+				{ $project: { 
+					'notes.index': 1, 
+				} }, { 
+					$unwind: '$notes' 
+				}, { 
+					$sort: { 'notes.index': -1 } 
+				}, { 
+					$limit: 1
+				}
+			]);
+
+			highestIndex = (await highestIndexCursor.toArray())[0].notes.index;
+		}
 
 		if (!existingNote)
 		{
