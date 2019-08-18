@@ -404,24 +404,32 @@ class BiometricDiaryServer
 		let retrievedNotesCursor; 
 		try 
 		{
-			retrievedNotesCursor = await this.loginDataDb.aggregate([
-				{ $project: { 
+			retrievedNotesCursor = await this.loginDataDb.aggregate([{ 
+				$project: { 
 					'notes._id': 1, 
 					'notes.index': 1, 
 					'notes.date_created': 1, 
 					'notes.date_updated': 1, 
-					'notes.content': 1 
+					'notes.content': 1, 
 				} }, { 
-					$unwind: '$notes' 
+					$unwind: '$notes',
 				}, { 
-					$sort: { 'notes.index': -1 } 
+					$sort: { 'notes.index': -1 },
 				}, { 
-					$limit: 2 
-				}
+					$limit: 2,
+				},
 			]);
 
-			const retrievedNotes = await retrievedNotesCursor.toArray();
-			return res.send(retrievedNotes);
+			const retrievedData = await retrievedNotesCursor.toArray();
+			const retrievedNotes = [];
+			retrievedData.forEach(element => retrievedNotes.push(element.notes));
+
+			const notesResponse: INotesRequest = {
+				retrievedNotes,
+				noAdditionalNotes: retrievedNotes.length <= 2,
+			}
+
+			return res.send(notesResponse);
 		}
 		catch (err)
 		{
@@ -529,6 +537,11 @@ interface INote {
 	Content: string;
 	DateCreated: number;
 	DateUpdated: number;
+}
+
+interface INotesRequest {
+	retrievedNotes: INote[];
+	noAdditionalNotes: boolean;
 }
 
 enum AuthenticationStatus {

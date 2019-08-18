@@ -27,7 +27,8 @@ class BiometricDiaryClient {
 	private authUpdateProgressRing: ProgressRing;
 
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
-	private initialNoteInput = document.getElementById('initial-note-input') as HTMLTextAreaElement;
+	private noteInputTemplate = document.getElementById('note-input-template') as HTMLTemplateElement;
+	private initialNoteInput: HTMLTextAreaElement;
 	
 	private onInitialNoteKeyDown: (evt: KeyboardEvent) => void;
 
@@ -115,6 +116,9 @@ class BiometricDiaryClient {
 		this.loginHelpText1.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
 		this.loginHelpText2.addEventListener('mouseover', () => this.OnLoginHelpMouseOver());
 		this.loginHelpText2.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
+
+		this.initialNoteInput = document.importNode(this.noteInputTemplate.content, true).querySelector(".note-input");
+		this.notesContainer.insertAdjacentElement('afterbegin', this.initialNoteInput);
 	}
 
 	private async SubmitLogin(): Promise<void>
@@ -532,10 +536,7 @@ class BiometricDiaryClient {
 				}),
 			})).json();
 
-			notesRequestResult.retrievedNotes.forEach((note) =>
-			{
-
-			});
+			notesRequestResult.retrievedNotes.forEach(note => this.InsertNewNote(note));
 
 			// Indicate when the user has reached the end
 			if (notesRequestResult.noAdditionalNotes)
@@ -554,6 +555,11 @@ class BiometricDiaryClient {
 		{
 			this.requestingUserNotes = false;
 		}
+	}
+
+	private InsertNewNote(note: INote)
+	{
+
 	}
 
 	private UpdateAuthUpdateProgressRing(): void
