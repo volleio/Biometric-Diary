@@ -237,15 +237,16 @@ class BiometricDiaryServer
 					return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 				}
 
-				const noteId = this.GenerateUuid();
+				const noteData = {
+					Id: this.GenerateUuid(),
+					Content: noteContents,
+					DateCreated: new Date().valueOf(),
+					DateUpdated: new Date().valueOf(),
+				} as INote;
+
 				try
 				{
-					await this.SaveNote(req.session.key, {
-						Id: noteId,
-						Content: noteContents,
-						DateCreated: new Date().valueOf(),
-						DateUpdated: new Date().valueOf(),
-					} as INote);
+					await this.SaveNote(req.session.key, noteData);
 				}
 				catch (err)
 				{
@@ -256,7 +257,7 @@ class BiometricDiaryServer
 				
 				req.session.successfulAuthentication = true;			
 				return res.send({ 
-					noteId,
+					noteData,
 					authenticationStatus: AuthenticationStatus.success,
 					authenticationProgress: 1,
 				});
@@ -317,16 +318,17 @@ class BiometricDiaryServer
 		}
 
 		// Then save the first note's contents to the user's account
+		const noteData = {
+			Id: this.GenerateUuid(),
+			Index: 1,
+			Content: noteContents,
+			DateCreated: new Date().valueOf(),
+			DateUpdated: new Date().valueOf(),
+		} as INote
+
 		try
 		{
-			const noteId = this.GenerateUuid();
-			await this.SaveNote(req.session.key, {
-				Id: noteId,
-				Index: 1,
-				Content: noteContents,
-				DateCreated: new Date().valueOf(),
-				DateUpdated: new Date().valueOf(),
-			} as INote);
+			await this.SaveNote(req.session.key, noteData);
 		}
 		catch (err)
 		{
@@ -337,6 +339,7 @@ class BiometricDiaryServer
 
 		req.session.successfulAuthentication = true;
 		return res.send({ 
+			noteData,
 			authenticationStatus: AuthenticationStatus.success,
 			authenticationProgress: 1,
 		});
@@ -421,7 +424,7 @@ class BiometricDiaryServer
 			]);
 
 			const retrievedData = await retrievedNotesCursor.toArray();
-			const retrievedNotes = [];
+			const retrievedNotes: INote[] = [];
 			retrievedData.forEach(element => retrievedNotes.push(element.notes));
 
 			const notesResponse: INotesRequest = {

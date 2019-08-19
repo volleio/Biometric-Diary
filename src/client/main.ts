@@ -29,6 +29,7 @@ class BiometricDiaryClient {
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
 	private noteInputTemplate = document.getElementById('note-input-template') as HTMLTemplateElement;
 	private initialNoteInput: HTMLTextAreaElement;
+	private noteInputs: HTMLTextAreaElement[];
 	
 	private onInitialNoteKeyDown: (evt: KeyboardEvent) => void;
 
@@ -38,7 +39,7 @@ class BiometricDiaryClient {
 	private keysPressedSinceMatchUpdate = 0;
 
 	private requestingUserNotes = false;
-	private notesToSave: { [key: string]: HTMLTextAreaElement } = {};
+	private notesToSave: Set<Note> = new Set();
 
 	constructor() 
 	{
@@ -117,7 +118,7 @@ class BiometricDiaryClient {
 		this.loginHelpText2.addEventListener('mouseover', () => this.OnLoginHelpMouseOver());
 		this.loginHelpText2.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
 
-		this.initialNoteInput = document.importNode(this.noteInputTemplate.content, true).querySelector(".note-input");
+		this.initialNoteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input');
 		this.notesContainer.insertAdjacentElement('afterbegin', this.initialNoteInput);
 	}
 
@@ -497,24 +498,15 @@ class BiometricDiaryClient {
 			this.loginAuthBadgeCheck.classList.add('auth-success');
 
 			this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
-			this.SetupNoteToSave(initialNoteMatchResult.noteId, this.initialNoteInput);	
+			const initialNote = new Note(initialNoteMatchResult.noteData, this.initialNoteInput, this.OnAnyNoteValueUpdate);	
 			
 			this.RequestUserNotes(new Date());
 		}
 	}
 
-	private SetupNoteToSave(noteId: string, textArea: HTMLTextAreaElement)
+	private OnAnyNoteValueUpdate(note: Note): void
 	{
-		this.initialNoteInput.addEventListener('keydown', (evt) => 
-		{ 
-			requestAnimationFrame(() => this.OnAnyNoteValueUpdate(noteId, textArea)); 
-		});
-		
-	}
-
-	private OnAnyNoteValueUpdate(noteId: string, textArea: HTMLTextAreaElement): void
-	{
-		this.notesToSave[noteId] = textArea;
+		this.notesToSave.add(note);
 	}
 
 	private async RequestUserNotes(beforeDate: Date): Promise<void>
@@ -536,7 +528,7 @@ class BiometricDiaryClient {
 				}),
 			})).json();
 
-			notesRequestResult.retrievedNotes.forEach(note => this.InsertNewNote(note));
+			notesRequestResult.retrievedNotes.forEach(noteData => this.InsertNewNote(noteData));
 
 			// Indicate when the user has reached the end
 			if (notesRequestResult.noAdditionalNotes)
@@ -557,9 +549,14 @@ class BiometricDiaryClient {
 		}
 	}
 
-	private InsertNewNote(note: INote)
+	private InsertNewNote(noteData: INote)
 	{
+		const noteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input') as HTMLTextAreaElement;
+		this.notesContainer.insertAdjacentElement('afterend', this.initialNoteInput);
 
+		const note = new Note(noteData, noteInput, this.OnAnyNoteValueUpdate);
+
+		this.noteInputs.push(noteInput);
 	}
 
 	private UpdateAuthUpdateProgressRing(): void
@@ -632,6 +629,38 @@ class ProgressRing
 			this.partialRotation = degrees;
 			
 		this.progressRing.parentElement.style.transform = `rotate(${this.fullRotations * 360 + this.partialRotation}deg)`;
+	}
+}
+
+class Note
+{
+	private id: string;
+	private dateCreated: Date;
+	private dateUpdated: Date;
+
+	private input: HTMLTextAreaElement;
+	
+	private onValueUpdate: (note: Note) => void;
+
+	constructor(data: INote, input: HTMLTextAreaElement, onValueUpdate: (note: Note) => void)
+	{
+		this.id = data.Id;
+		this.dateCreated = new Date(data.DateCreated);
+		this.dateUpdated = new Date(data.DateUpdated);
+
+		this.input = input;
+
+		this.onValueUpdate = onValueUpdate;
+
+		this.Initialize(data);
+	}
+
+	private Initialize(data: INote): void
+	{
+		this.input.value = data.Content;
+		this.input.addEventListener('keydown', () => {
+			window.requestAnimationFrame(() => this.onValueUpdate(this.id, this.input.value));
+		});
 	}
 }
 
