@@ -35,6 +35,8 @@ class BiometricDiaryServer
 	private static THEME = process.env.THEME || '';
 	private static ALLOWED_THEMES = ['alt-theme'];
 
+	private static NOTES_REQUEST_LIMIT = 2;
+
 	/**
 	 * Member vars
 	 */
@@ -324,7 +326,7 @@ class BiometricDiaryServer
 			Content: noteContents,
 			DateCreated: new Date().valueOf(),
 			DateUpdated: new Date().valueOf(),
-		} as INote
+		} as INote;
 
 		try
 		{
@@ -419,18 +421,24 @@ class BiometricDiaryServer
 				}, { 
 					$sort: { 'notes.index': -1 },
 				}, { 
-					$limit: 2,
+					$limit: BiometricDiaryServer.NOTES_REQUEST_LIMIT,
 				},
 			]);
 
 			const retrievedData = await retrievedNotesCursor.toArray();
 			const retrievedNotes: INote[] = [];
-			retrievedData.forEach(element => retrievedNotes.push(element.notes));
+			retrievedData.forEach(element => retrievedNotes.push({
+				Id: element.notes._id,
+				Index: element.notes.index,
+				Content: element.notes.content,
+				DateCreated: element.notes.date_created,
+				DateUpdated: element.notes.date_updated,
+			} as INote));
 
 			const notesResponse: INotesRequest = {
 				retrievedNotes,
-				noAdditionalNotes: retrievedNotes.length <= 2,
-			}
+				noAdditionalNotes: retrievedNotes.length < BiometricDiaryServer.NOTES_REQUEST_LIMIT,
+			};
 
 			return res.send(notesResponse);
 		}
@@ -482,12 +490,12 @@ class BiometricDiaryServer
 				{ $project: { 
 					'notes.index': 1, 
 				} }, { 
-					$unwind: '$notes' 
+					$unwind: '$notes',
 				}, { 
-					$sort: { 'notes.index': -1 } 
+					$sort: { 'notes.index': -1 },
 				}, { 
-					$limit: 1
-				}
+					$limit: 1,
+				},
 			]);
 
 			highestIndex = (await highestIndexCursor.toArray())[0].notes.index;
@@ -537,6 +545,7 @@ const biometricDiaryServer = new BiometricDiaryServer();
 
 interface INote {
 	Id: string;
+	Index: number;
 	Content: string;
 	DateCreated: number;
 	DateUpdated: number;

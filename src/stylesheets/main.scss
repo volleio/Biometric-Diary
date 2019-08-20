@@ -525,6 +525,7 @@ body.alt-theme .login-container {
 
     &.notes-container--visible {
         display: grid;
+        grid-gap: 40px;
         max-height: 100%;
         opacity: 1;
         pointer-events: all;

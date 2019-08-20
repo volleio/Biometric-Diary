@@ -29,7 +29,8 @@ class BiometricDiaryClient {
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
 	private noteInputTemplate = document.getElementById('note-input-template') as HTMLTemplateElement;
 	private initialNoteInput: HTMLTextAreaElement;
-	private noteInputs: HTMLTextAreaElement[];
+	private notes: Note[] = [];
+	private endOfNotes = this.notesContainer.querySelector('.end-of-notes') as HTMLElement;
 	
 	private onInitialNoteKeyDown: (evt: KeyboardEvent) => void;
 
@@ -119,6 +120,7 @@ class BiometricDiaryClient {
 		this.loginHelpText2.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
 
 		this.initialNoteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input');
+		this.initialNoteInput.id = 'initial-note-input';
 		this.notesContainer.insertAdjacentElement('afterbegin', this.initialNoteInput);
 	}
 
@@ -498,7 +500,7 @@ class BiometricDiaryClient {
 			this.loginAuthBadgeCheck.classList.add('auth-success');
 
 			this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
-			const initialNote = new Note(initialNoteMatchResult.noteData, this.initialNoteInput, this.OnAnyNoteValueUpdate);	
+			const initialNote = new Note(initialNoteMatchResult.noteData, this.initialNoteInput, (note: Note) => this.OnAnyNoteValueUpdate(note));	
 			
 			this.RequestUserNotes(new Date());
 		}
@@ -533,10 +535,9 @@ class BiometricDiaryClient {
 			// Indicate when the user has reached the end
 			if (notesRequestResult.noAdditionalNotes)
 			{
-				const endOfNotes = this.notesContainer.querySelector('.end-of-notes') as HTMLElement;
-				const endOfNotesMsg = endOfNotes.querySelector('.end-of-notes__msg') as HTMLElement;
+				const endOfNotesMsg = this.endOfNotes.querySelector('.end-of-notes__msg') as HTMLElement;
 				endOfNotesMsg.innerHTML = LANG_DICT.Notes.EndOfNotes;
-				endOfNotes.style.display = '';
+				this.endOfNotes.style.display = '';
 			}
 		}
 		catch (err)
@@ -552,11 +553,10 @@ class BiometricDiaryClient {
 	private InsertNewNote(noteData: INote)
 	{
 		const noteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input') as HTMLTextAreaElement;
-		this.notesContainer.insertAdjacentElement('afterend', this.initialNoteInput);
+		this.endOfNotes.insertAdjacentElement('beforebegin', noteInput);
 
 		const note = new Note(noteData, noteInput, this.OnAnyNoteValueUpdate);
-
-		this.noteInputs.push(noteInput);
+		this.notes.push(note);
 	}
 
 	private UpdateAuthUpdateProgressRing(): void
@@ -658,9 +658,7 @@ class Note
 	private Initialize(data: INote): void
 	{
 		this.input.value = data.Content;
-		this.input.addEventListener('keydown', () => {
-			window.requestAnimationFrame(() => this.onValueUpdate(this.id, this.input.value));
-		});
+		this.input.addEventListener('keydown', () => window.requestAnimationFrame(() => this.onValueUpdate(this)));
 	}
 }
 
@@ -683,7 +681,6 @@ enum AuthenticationStatus {
 }
 
 interface INote {
-	UserId: string;
 	Id: string;
 	Index: number;
 	Content: string;
