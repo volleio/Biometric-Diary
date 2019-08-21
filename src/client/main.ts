@@ -528,7 +528,7 @@ class BiometricDiaryClient {
 		{
 			note.SetSavingState(true);
 			notesBeingSaved.push(note);
-			notesToSave.push(note.GetNoteData()
+			notesToSave.push(note.GetNoteData());
 		});
 		this.notesToSave.clear();
 
@@ -546,7 +546,7 @@ class BiometricDiaryClient {
 		}
 		finally
 		{
-			notesBeingSaved.forEach((note) => note.SetSavingState(false));
+			notesBeingSaved.forEach(note => note.SetSavingState(false));
 			this.savingNotes = false;
 		}
 	}
