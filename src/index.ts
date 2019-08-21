@@ -123,6 +123,7 @@ class BiometricDiaryServer
 		this.app.post('/authenticate-note', async (req, res) => this.OnAuthenticateNoteReq(req, res));
 		this.app.post('/create-account', async (req, res) => this.OnCreateAccountReq(req, res));
 		this.app.post('/get-notes', async (req, res) => this.OnNotesReq(req, res));
+		this.app.post('/save-notes', async (req, res) => this.OnSaveNotesReq(req, res));
 		this.app.post('/logout', async (req, res) => this.OnLogoutReq(req, res));
 	}
 
@@ -154,7 +155,7 @@ class BiometricDiaryServer
 		if (!userData || !userData.id_patterns || userData.id_patterns.length < 2)
 		{
 			req.session.key = loginInput;
-			req.session.loginQuality = 0;
+			req.session.loginQuality = 1;
 			req.session.typingPattern = typingPattern;
 			return res.send({ authenticationStatus: AuthenticationStatus.userNotFound });
 		}
@@ -204,7 +205,6 @@ class BiometricDiaryServer
 		}
 		
 		req.session.key = loginInput;
-		req.session.successfulLogin = true;
 		req.session.loginQuality = matchResult.score;
 		
 		// TODO: get rid of this
@@ -216,13 +216,15 @@ class BiometricDiaryServer
 	
 	private async OnAuthenticateNoteReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
-		if (!req.session || !req.session.key || !req.body.typingPattern || !req.body.noteContents)
+		if (!req.session || !req.session.key || req.session.loginQuality < 1 ||
+			!req.body.typingPattern || !req.body.noteContents)
 			return res.status(500).send();
 				
 		const typingPattern = req.body.typingPattern;
 		const noteContents = req.body.noteContents;
 		const userData = req.session.userData;
 
+		// TODO: refactor this and the block below into a single db update/value return method
 		if (!userData.note_patterns || userData.note_patterns.length < 1)
 		{
 			if (noteContents.length >= BiometricDiaryServer.MIN_FIRST_NOTE_LENGTH)
@@ -257,7 +259,7 @@ class BiometricDiaryServer
 					return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 				}
 				
-				req.session.successfulAuthentication = true;			
+				req.session.loginQuality = 2;		
 				return res.send({ 
 					noteData,
 					authenticationStatus: AuthenticationStatus.success,
@@ -339,7 +341,7 @@ class BiometricDiaryServer
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
 
-		req.session.successfulAuthentication = true;
+		req.session.loginQuality = 2;
 		return res.send({ 
 			noteData,
 			authenticationStatus: AuthenticationStatus.success,
@@ -395,17 +397,16 @@ class BiometricDiaryServer
 			return res.status(500).send({ authenticationStatus: AuthenticationStatus.error });
 		}
 
-		req.session.successfulLogin = true;
 		req.session.loginQuality = 1;
 		return res.send({ authenticationStatus: AuthenticationStatus.success });
 	}
 
 	private async OnNotesReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
-		if (!req.session || !req.body.beforeDate)
+		if (!req.session || req.session.loginQuality < 2 || 
+			!req.body.beforeIndex || typeof(req.body.beforeIndex) !== 'number')
 			return res.status(500).send();
 
-		const beforeDate = new Date(req.body.beforeDate);
 		let retrievedNotesCursor; 
 		try 
 		{
@@ -418,9 +419,13 @@ class BiometricDiaryServer
 					'notes.content': 1, 
 				} }, { 
 					$unwind: '$notes',
-				}, { 
+				}, {
 					$sort: { 'notes.index': -1 },
 				}, { 
+					$match: { 
+					   'notes.index' : { $lt: req.body.beforeIndex },
+					},
+				}, {
 					$limit: BiometricDiaryServer.NOTES_REQUEST_LIMIT,
 				},
 			]);
@@ -448,6 +453,23 @@ class BiometricDiaryServer
 			console.error(err);
 			return res.status(500).send();
 		}
+	}
+
+	private async OnSaveNotesReq(req: express.Request, res: express.Response): Promise<express.Response>
+	{
+		if (!req.session || !req.session.key || req.session.loginQuality < 2)
+			return res.status(500).send();
+
+		const notesToSave: INote[] = req.body.notesToSave;
+		const savingNotes: Promise<any>[] = [];
+		notesToSave.forEach((noteData) => 
+		{
+			savingNotes.push(this.SaveNote(req.session.key, noteData, false));
+		});
+
+		await Promise.all(savingNotes);
+
+		return res.send();
 	}
 
 	private async OnLogoutReq(req: express.Request, res: express.Response): Promise<express.Response>

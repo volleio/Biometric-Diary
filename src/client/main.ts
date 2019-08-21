@@ -3,6 +3,8 @@ class BiometricDiaryClient {
 	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
+	private static NOTE_SAVE_INTERVAL = 1000;
+
 	private mainContainer: HTMLElement;
 	private typingDna: any;
 
@@ -40,6 +42,7 @@ class BiometricDiaryClient {
 	private keysPressedSinceMatchUpdate = 0;
 
 	private requestingUserNotes = false;
+	private savingNotes = false;
 	private notesToSave: Set<Note> = new Set();
 
 	constructor() 
@@ -142,9 +145,7 @@ class BiometricDiaryClient {
 		{
 			loginResult = await (await fetch('/login', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					typingPattern,
 					loginId: loginValue,
@@ -238,9 +239,7 @@ class BiometricDiaryClient {
 		{
 			createAccountResult = await (await fetch('/create-account', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					typingPattern,
 				}),
@@ -467,9 +466,7 @@ class BiometricDiaryClient {
 		{
 			initialNoteMatchResult = await (await fetch('/authenticate-note', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					typingPattern,
 					noteContents: initialNoteValue,
@@ -493,25 +490,68 @@ class BiometricDiaryClient {
 		 * set up the rest of the user's notes
 		 */
 		if (initialNoteMatchResult.authenticationStatus === AuthenticationStatus.success)
-		{
-			this.authMatchProgressRing.SetProgress(1);
-			this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
-			this.loginAuthBadgeCheck.classList.remove('animate-in');
-			this.loginAuthBadgeCheck.classList.add('auth-success');
+			this.OnInitialNoteSuccess(initialNoteMatchResult.noteData);
+	}
 
-			this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
-			const initialNote = new Note(initialNoteMatchResult.noteData, this.initialNoteInput, (note: Note) => this.OnAnyNoteValueUpdate(note));	
-			
-			this.RequestUserNotes(new Date());
-		}
+	private OnInitialNoteSuccess(initialNoteData): void
+	{
+		this.authMatchProgressRing.SetProgress(1);
+		this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
+		this.loginAuthBadgeCheck.classList.remove('animate-in');
+		this.loginAuthBadgeCheck.classList.add('auth-success');
+
+		this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
+		const initialNote = new Note(initialNoteData, this.initialNoteInput, (note: Note) => this.OnAnyNoteValueUpdate(note));	
+		
+		this.RequestUserNotes(-1);
+
+		window.setInterval(() => this.SaveNotes(), BiometricDiaryClient.NOTE_SAVE_INTERVAL);
 	}
 
 	private OnAnyNoteValueUpdate(note: Note): void
 	{
+		note.SetSavingState(true);
+		note.SetDateUpdated(new Date());
 		this.notesToSave.add(note);
 	}
 
-	private async RequestUserNotes(beforeDate: Date): Promise<void>
+	private async SaveNotes(): Promise<void>
+	{
+		if (this.savingNotes || this.notesToSave.size === 0)
+			return;
+
+		this.savingNotes = true;
+		
+		const notesBeingSaved: Note[] = [];
+		const notesToSave: INote[] = [];
+		this.notesToSave.forEach((note) => 
+		{
+			note.SetSavingState(true);
+			notesBeingSaved.push(note);
+			notesToSave.push(note.GetNoteData()
+		});
+		this.notesToSave.clear();
+
+		try
+		{
+			await fetch('/save-notes', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ notesToSave }),
+			});
+		}
+		catch (err)
+		{
+			console.error(err);
+		}
+		finally
+		{
+			notesBeingSaved.forEach((note) => note.SetSavingState(false));
+			this.savingNotes = false;
+		}
+	}
+
+	private async RequestUserNotes(beforeIndex: number): Promise<void>
 	{
 		if (this.requestingUserNotes)
 			return; // Request currently being made
@@ -522,12 +562,8 @@ class BiometricDiaryClient {
 		{
 			notesRequestResult = await (await fetch('/get-notes', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					beforeDate: beforeDate.valueOf(),
-				}),
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ beforeIndex }),
 			})).json();
 
 			notesRequestResult.retrievedNotes.forEach(noteData => this.InsertNewNote(noteData));
@@ -555,7 +591,7 @@ class BiometricDiaryClient {
 		const noteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input') as HTMLTextAreaElement;
 		this.endOfNotes.insertAdjacentElement('beforebegin', noteInput);
 
-		const note = new Note(noteData, noteInput, this.OnAnyNoteValueUpdate);
+		const note = new Note(noteData, noteInput, updatedNote => this.OnAnyNoteValueUpdate(updatedNote));
 		this.notes.push(note);
 	}
 
@@ -635,9 +671,11 @@ class ProgressRing
 class Note
 {
 	private id: string;
+	private index: number;
 	private dateCreated: Date;
 	private dateUpdated: Date;
 
+	private container: HTMLElement;
 	private input: HTMLTextAreaElement;
 	
 	private onValueUpdate: (note: Note) => void;
@@ -645,6 +683,7 @@ class Note
 	constructor(data: INote, input: HTMLTextAreaElement, onValueUpdate: (note: Note) => void)
 	{
 		this.id = data.Id;
+		this.index = data.Index;
 		this.dateCreated = new Date(data.DateCreated);
 		this.dateUpdated = new Date(data.DateUpdated);
 
@@ -653,6 +692,34 @@ class Note
 		this.onValueUpdate = onValueUpdate;
 
 		this.Initialize(data);
+	}
+	
+	public GetNoteData(): INote
+	{
+		return {
+			Id: this.id,
+			Index: this.index,
+			Content: this.input.value,
+			DateCreated: this.dateCreated.valueOf(),
+			DateUpdated: this.dateUpdated.valueOf(),
+		} as INote;
+	}
+
+	public SetDateUpdated(date: Date) { this.dateUpdated = date; }
+	public SetIndex(index: number) { this.index = index; }
+	
+	public SetSavingState(saving: boolean)
+	{
+		if (saving)
+		{
+			this.container.classList.add('note-saving');
+			this.container.classList.remove('note-saved');
+		}
+		else
+		{
+			this.container.classList.remove('note-saving');
+			this.container.classList.add('note-saved');
+		}
 	}
 
 	private Initialize(data: INote): void

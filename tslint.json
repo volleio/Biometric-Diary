@@ -26,7 +26,8 @@
         "function-name": false,
         "object-literal-sort-keys": false,
         "arrow-parens": false,
-        "no-bitwise": false
+        "no-bitwise": false,
+        "array-type": false
     },
     "rulesDirectory": []
 }

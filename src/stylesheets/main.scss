@@ -515,8 +515,8 @@ body.alt-theme .login-container {
 .notes-container {
     display: none;
     max-height: 0;
-    margin-top: calc(50vh - 100px);
-    margin-bottom: calc(100vh - 500px);
+    margin-top: calc(20vh + 80px);
+    margin-bottom: calc(20vh + 80px);
 
     opacity: 0;
     pointer-events: none;
@@ -530,6 +530,17 @@ body.alt-theme .login-container {
         opacity: 1;
         pointer-events: all;
     }
+}
+
+.note-container {
+    
+}
+
+.note-saving {
+    
+}
+.note-saved {
+    
 }
 
 .note-input {
