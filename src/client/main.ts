@@ -4,6 +4,7 @@ class BiometricDiaryClient {
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
 	private static NOTE_SAVE_INTERVAL = 1000;
+	private static NOTE_REQUEST_INTERVAL = 500;
 
 	private mainContainer: HTMLElement;
 	private typingDna: any;
@@ -33,6 +34,7 @@ class BiometricDiaryClient {
 	private initialNoteInput: HTMLTextAreaElement;
 	private notes: Note[] = [];
 	private endOfNotes = this.notesContainer.querySelector('.end-of-notes') as HTMLElement;
+	private notesSpinner = this.notesContainer.querySelector('.notes-spinner') as HTMLElement;
 	
 	private onInitialNoteKeyDown: (evt: KeyboardEvent) => void;
 
@@ -42,7 +44,10 @@ class BiometricDiaryClient {
 	private keysPressedSinceMatchUpdate = 0;
 
 	private requestingUserNotes = false;
+	private shouldRequestUserNotes = false;
+	private reachedEndOfNotes = false;
 	private savingNotes = false;
+	private lowestNoteIndexRetrieved = Number.MAX_SAFE_INTEGER;
 	private notesToSave: Set<Note> = new Set();
 
 	constructor() 
@@ -479,7 +484,7 @@ class BiometricDiaryClient {
 			initialNoteMatchResult = { authenticationStatus: AuthenticationStatus.error };
 		}
 
-		console.log(initialNoteMatchResult);
+		console.debug(initialNoteMatchResult);
 
 		const authProgress = initialNoteMatchResult.authenticationProgress;
 		this.authMatchProgressRing.SetProgress(authProgress * 0.8); // Show max progress of 80%, so that progress doesn't appear to be complete without success
@@ -493,7 +498,7 @@ class BiometricDiaryClient {
 			this.OnInitialNoteSuccess(initialNoteMatchResult.noteData);
 	}
 
-	private OnInitialNoteSuccess(initialNoteData): void
+	private OnInitialNoteSuccess(initialNoteData: INote): void
 	{
 		this.authMatchProgressRing.SetProgress(1);
 		this.authMatchProgressRing.progressRing.setAttribute('fill', '#46AB2B');
@@ -503,7 +508,16 @@ class BiometricDiaryClient {
 		this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
 		const initialNote = new Note(initialNoteData, this.initialNoteInput, (note: Note) => this.OnAnyNoteValueUpdate(note));	
 		
-		this.RequestUserNotes(-1);
+		this.RequestUserNotes(initialNoteData.Index);
+
+		const endOfNotesIntersectionObserver = new IntersectionObserver((entries) => {
+			this.shouldRequestUserNotes = entries.length > 0 && entries[0].isIntersecting;
+		});
+		endOfNotesIntersectionObserver.observe(this.endOfNotes);
+		window.setInterval(() => { 
+			if (this.shouldRequestUserNotes && !this.reachedEndOfNotes)
+				this.RequestUserNotes(this.lowestNoteIndexRetrieved);
+		}, BiometricDiaryClient.NOTE_REQUEST_INTERVAL);
 
 		window.setInterval(() => this.SaveNotes(), BiometricDiaryClient.NOTE_SAVE_INTERVAL);
 	}
@@ -557,6 +571,8 @@ class BiometricDiaryClient {
 			return; // Request currently being made
 
 		this.requestingUserNotes = true;
+		this.notesSpinner.style.opacity = '1';
+
 		let notesRequestResult: INotesRequest;
 		try
 		{
@@ -571,6 +587,7 @@ class BiometricDiaryClient {
 			// Indicate when the user has reached the end
 			if (notesRequestResult.noAdditionalNotes)
 			{
+				this.reachedEndOfNotes = true;
 				const endOfNotesMsg = this.endOfNotes.querySelector('.end-of-notes__msg') as HTMLElement;
 				endOfNotesMsg.innerHTML = LANG_DICT.Notes.EndOfNotes;
 				this.endOfNotes.style.display = '';
@@ -583,6 +600,7 @@ class BiometricDiaryClient {
 		finally
 		{
 			this.requestingUserNotes = false;
+			this.notesSpinner.style.opacity = '';
 		}
 	}
 
@@ -593,6 +611,9 @@ class BiometricDiaryClient {
 
 		const note = new Note(noteData, noteInput, updatedNote => this.OnAnyNoteValueUpdate(updatedNote));
 		this.notes.push(note);
+
+		if (noteData.Index < this.lowestNoteIndexRetrieved)
+			this.lowestNoteIndexRetrieved = noteData.Index;
 	}
 
 	private UpdateAuthUpdateProgressRing(): void

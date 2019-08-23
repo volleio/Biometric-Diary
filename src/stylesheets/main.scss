@@ -272,6 +272,7 @@ body.alt-theme .primary-button {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     overflow: hidden;
+    z-index: 1000;
 
     transition: height .5s var(--ease-in-out-cubic),
                 width .5s var(--ease-in-out-cubic),
@@ -513,6 +514,7 @@ body.alt-theme .login-container {
 }
 
 .notes-container {
+    position: relative;
     display: none;
     max-height: 0;
     margin-top: calc(20vh + 80px);
@@ -526,7 +528,7 @@ body.alt-theme .login-container {
     &.notes-container--visible {
         display: grid;
         grid-gap: 40px;
-        max-height: 100%;
+        max-height: unset;
         opacity: 1;
         pointer-events: all;
     }
@@ -554,17 +556,19 @@ body.alt-theme .login-container {
     box-shadow: 0 0 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 
-.notes-spinner {
+.notes-spinner.spinner {
     position: absolute;
     left: 50%;
-    bottom: 0;
+    bottom: -180px;
     transform: translate(-50%);
     opacity: 0;
+
+    transition: opacity 0.1s var(--ease-in-out-cubic);
 }
 
 .end-of-notes {
     position: absolute;
-    bottom: 0;
+    bottom: -180px;
     left: 50%;
     transform: translate(-50%);
     width: 400px;

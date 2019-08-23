@@ -244,6 +244,7 @@ class BiometricDiaryServer
 				const noteData = {
 					Id: this.GenerateUuid(),
 					Content: noteContents,
+					Index: -1,
 					DateCreated: new Date().valueOf(),
 					DateUpdated: new Date().valueOf(),
 				} as INote;
@@ -506,7 +507,7 @@ class BiometricDiaryServer
 		}, { projection: { notes: 1 } });
 
 		let highestIndex = 0;
-		if (!firstNote)
+		if (!firstNote || noteData.Index === -1)
 		{
 			const highestIndexCursor = await this.loginDataDb.aggregate([
 				{ $project: { 
@@ -522,6 +523,9 @@ class BiometricDiaryServer
 
 			highestIndex = (await highestIndexCursor.toArray())[0].notes.index;
 		}
+		
+		if (noteData.Index === -1 || firstNote)
+			noteData.Index = highestIndex + 1;
 
 		if (!existingNote)
 		{
@@ -529,7 +533,7 @@ class BiometricDiaryServer
 			await this.loginDataDb.updateOne({ _id: userId.toLowerCase() }, { $push: { 
 				notes: {
 					_id: noteData.Id,
-					index: highestIndex + 1,
+					index: noteData.Index,
 					date_created: noteData.DateCreated,
 					date_updated: noteData.DateUpdated,
 					content: noteData.Content,
@@ -545,7 +549,7 @@ class BiometricDiaryServer
 			}, { 
 				notes: {
 					_id: noteData.Id,
-					index: highestIndex + 1,
+					index: noteData.Index,
 					date_updated: noteData.DateUpdated,
 					content: noteData.Content,
 				},
