@@ -137,7 +137,7 @@ body.alt-theme .primary-button {
     color: var(--accent-bg-color);
 }
 
-.popup-container {
+.warning-container {
     position: absolute;
     padding: 8px;
 
@@ -147,7 +147,7 @@ body.alt-theme .primary-button {
     box-shadow: 0 2px 14px -4px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.popup-close {
+.warning-close {
     position: absolute;
     top: 0;
     right: 0;
@@ -232,7 +232,7 @@ body.alt-theme .primary-button {
 }
 
 /*
- * Mobile warning popup
+ * Mobile warning warning
  */
 .mobile-warning {
     display: none; // flex

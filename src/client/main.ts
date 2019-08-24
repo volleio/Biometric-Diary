@@ -69,8 +69,8 @@ class BiometricDiaryClient {
 			const mobileWarningText = mobileWarning.querySelector('.mobile-warning__body');
 			mobileWarningText.innerHTML = LANG_DICT.Other.MobileWarningText;
 
-			const popupClose = mobileWarning.querySelector('.popup-close') as HTMLButtonElement;
-			popupClose.addEventListener('click', () => mobileWarning.style.display = 'none');
+			const warningClose = mobileWarning.querySelector('.warning-close') as HTMLButtonElement;
+			warningClose.addEventListener('click', () => mobileWarning.style.display = 'none');
 		}
 
 		// Set up login input tracking
