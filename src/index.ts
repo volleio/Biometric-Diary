@@ -483,7 +483,7 @@ class BiometricDiaryServer
 
 	private async MatchTypingString(newTypingPattern: string, oldTypingPattern: string, quality = 2): Promise<any>
 	{
-		return await (await fetch('https://api.typingdna.com/match', {
+		return await (await nodeFetch('https://api.typingdna.com/match', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'this.application/x-www-form-urlencoded',
