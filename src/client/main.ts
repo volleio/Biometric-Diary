@@ -31,6 +31,7 @@ class BiometricDiaryClient {
 
 	private notesContainer = document.querySelector('.notes-container') as HTMLElement;
 	private noteInputTemplate = document.getElementById('note-input-template') as HTMLTemplateElement;
+	private initialNoteContainer: HTMLTextAreaElement;
 	private initialNoteInput: HTMLTextAreaElement;
 	private notes: Note[] = [];
 	private endOfNotes = this.notesContainer.querySelector('.end-of-notes') as HTMLElement;
@@ -127,9 +128,10 @@ class BiometricDiaryClient {
 		this.loginHelpText2.addEventListener('mouseover', () => this.OnLoginHelpMouseOver());
 		this.loginHelpText2.addEventListener('mouseout', () => this.OnLoginHelpMouseOut());
 
-		this.initialNoteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input');
+		this.initialNoteContainer = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-container');
+		this.initialNoteInput = this.initialNoteContainer.querySelector('.note-input');
 		this.initialNoteInput.id = 'initial-note-input';
-		this.notesContainer.insertAdjacentElement('afterbegin', this.initialNoteInput);
+		this.notesContainer.insertAdjacentElement('afterbegin', this.initialNoteContainer);
 	}
 
 	private async SubmitLogin(): Promise<void>
@@ -506,15 +508,17 @@ class BiometricDiaryClient {
 		this.loginAuthBadgeCheck.classList.add('auth-success');
 
 		this.initialNoteInput.removeEventListener('keydown', this.onInitialNoteKeyDown);
-		const initialNote = new Note(initialNoteData, this.initialNoteInput, (note: Note) => this.OnAnyNoteValueUpdate(note));	
+		const initialNote = new Note(initialNoteData, this.initialNoteContainer, (note: Note) => this.OnAnyNoteValueUpdate(note));	
 		
 		this.RequestUserNotes(initialNoteData.Index);
 
-		const endOfNotesIntersectionObserver = new IntersectionObserver((entries) => {
+		const endOfNotesIntersectionObserver = new IntersectionObserver((entries) => 
+		{
 			this.shouldRequestUserNotes = entries.length > 0 && entries[0].isIntersecting;
 		});
 		endOfNotesIntersectionObserver.observe(this.endOfNotes);
-		window.setInterval(() => { 
+		window.setInterval(() => 
+		{ 
 			if (this.shouldRequestUserNotes && !this.reachedEndOfNotes)
 				this.RequestUserNotes(this.lowestNoteIndexRetrieved);
 		}, BiometricDiaryClient.NOTE_REQUEST_INTERVAL);
@@ -604,12 +608,12 @@ class BiometricDiaryClient {
 		}
 	}
 
-	private InsertNewNote(noteData: INote)
+	private InsertNewNote(noteData: INote): void
 	{
-		const noteInput = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-input') as HTMLTextAreaElement;
-		this.endOfNotes.insertAdjacentElement('beforebegin', noteInput);
+		const noteContainer = document.importNode(this.noteInputTemplate.content, true).querySelector('.note-container') as HTMLElement;
+		this.endOfNotes.insertAdjacentElement('beforebegin', noteContainer);
 
-		const note = new Note(noteData, noteInput, updatedNote => this.OnAnyNoteValueUpdate(updatedNote));
+		const note = new Note(noteData, noteContainer, updatedNote => this.OnAnyNoteValueUpdate(updatedNote));
 		this.notes.push(note);
 
 		if (noteData.Index < this.lowestNoteIndexRetrieved)
@@ -701,14 +705,15 @@ class Note
 	
 	private onValueUpdate: (note: Note) => void;
 
-	constructor(data: INote, input: HTMLTextAreaElement, onValueUpdate: (note: Note) => void)
+	constructor(data: INote, container: HTMLElement, onValueUpdate: (note: Note) => void)
 	{
 		this.id = data.Id;
 		this.index = data.Index;
 		this.dateCreated = new Date(data.DateCreated);
 		this.dateUpdated = new Date(data.DateUpdated);
 
-		this.input = input;
+		this.container = container;
+		this.input = this.container.querySelector('.note-input');
 
 		this.onValueUpdate = onValueUpdate;
 
