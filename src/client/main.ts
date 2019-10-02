@@ -3,7 +3,7 @@ class BiometricDiaryClient {
 	private static MATCH_UPDATE_MAXIMUM_KEYPRESSES = 30;
 	private static MATCH_UPDATE_MINIMUM_QUALITY = 0.5;
 
-	private static NOTE_SAVE_INTERVAL = 1000;
+	private static NOTE_SAVE_INTERVAL = 2000;
 	private static NOTE_REQUEST_INTERVAL = 500;
 
 	private mainContainer: HTMLElement;
@@ -541,12 +541,12 @@ class BiometricDiaryClient {
 		this.savingNotes = true;
 		
 		const notesBeingSaved: Note[] = [];
-		const notesToSave: INote[] = [];
+		const notesDataToSave: INote[] = [];
 		this.notesToSave.forEach((note) => 
 		{
 			note.SetSavingState(true);
 			notesBeingSaved.push(note);
-			notesToSave.push(note.GetNoteData());
+			notesDataToSave.push(note.GetNoteData());
 		});
 		this.notesToSave.clear();
 
@@ -555,7 +555,7 @@ class BiometricDiaryClient {
 			await fetch('/save-notes', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ notesToSave }),
+				body: JSON.stringify({ notesToSave: notesDataToSave }),
 			});
 		}
 		catch (err)

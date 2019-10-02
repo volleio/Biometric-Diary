@@ -492,6 +492,7 @@ body.alt-theme .login-container {
 .auth-match-progress-ring {
     position: absolute;
     top: 0;
+    left: 0;
 }
 
 .main-menu {
@@ -535,14 +536,38 @@ body.alt-theme .login-container {
 }
 
 .note-container {
-    
+    position: relative;
 }
 
-.note-saving {
-    
+.note-saving-indicator, .note-saved-indicator {
+    opacity: 0;
+    position: absolute;
+    bottom: 9px;
+    right: 10px;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
 }
-.note-saved {
-    
+
+.note-saving .note-saving-indicator {
+    opacity: 0.2;
+}
+
+.note-saved .note-saved-indicator {
+    opacity: 0.2;
+}
+
+.note-saving-indicator {
+    font-size: 18px;
+    color: #000;
+}
+
+.note-saved-indicator {
+    width: 10px;
+    height: 5px;
+    margin-bottom: 4px;
+    border-bottom: 2px solid #000;
+    border-left: 2px solid #000;
+    transform: rotateZ(-45deg);
 }
 
 .note-input {
