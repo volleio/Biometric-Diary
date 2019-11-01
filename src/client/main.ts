@@ -528,9 +528,17 @@ class BiometricDiaryClient {
 
 	private OnAnyNoteValueUpdate(note: Note): void
 	{
-		note.SetSavingState(true);
-		note.SetDateUpdated(new Date());
-		this.notesToSave.add(note);
+		const initialInputValue = note.GetInputValue();
+
+		window.requestAnimationFrame(() =>
+		{
+			if (initialInputValue === note.GetInputValue())
+				return;
+
+			note.SetSavingState(true);
+			note.SetDateUpdated(new Date());
+			this.notesToSave.add(note);
+		});
 	}
 
 	private async SaveNotes(): Promise<void>
@@ -730,6 +738,8 @@ class Note
 			DateUpdated: this.dateUpdated.valueOf(),
 		} as INote;
 	}
+
+	public GetInputValue() { return this.input.value; }
 
 	public SetDateUpdated(date: Date) { this.dateUpdated = date; }
 	public SetIndex(index: number) { this.index = index; }
