@@ -394,7 +394,7 @@ class BiometricDiaryClient {
 		logoutButton.innerHTML = LANG_DICT.MainMenu.Logout;
 		logoutButton.addEventListener('click', async () =>
 		{
-			await fetch('/logout');
+			await (await fetch('/logout'));
 			location.reload();
 		});
 		

@@ -124,14 +124,17 @@ class BiometricDiaryServer
 		this.app.post('/create-account', async (req, res) => this.OnCreateAccountReq(req, res));
 		this.app.post('/get-notes', async (req, res) => this.OnNotesReq(req, res));
 		this.app.post('/save-notes', async (req, res) => this.OnSaveNotesReq(req, res));
-		this.app.post('/logout', async (req, res) => this.OnLogoutReq(req, res));
+		this.app.get('/logout', async (req, res) => this.OnLogoutReq(req, res));
 	}
 
 	private async OnLoginReq(req: express.Request, res: express.Response): Promise<express.Response>
 	{
 		if (!req.session)
 			return res.status(500).send(); // Is redis running?
-				
+		
+		// Make sure old session doesn't exist anymore 
+		req.session.regenerate(() => { });
+
 		const loginInput = req.body.loginId;
 		const typingPattern = req.body.typingPattern;
 		
