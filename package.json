@@ -34,7 +34,7 @@
 		"dotenv": "^8.0.0",
 		"dtsmake": "0.0.10",
 		"ejs": "^2.6.2",
-		"express": "^4.17.1",
+		"express": "^4.17.3",
 		"express-rate-limit": "^4.0.4",
 		"express-session": "^1.16.2",
 		"mongodb": "^3.2.7",
